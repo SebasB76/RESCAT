@@ -135,7 +135,7 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
                     className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-sm transition ${method === "cardMock" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60 hover:border-pino/30"}`}
                   >
                     <CreditCardIcon className="size-5" />Tarjeta
-                    <span className="text-[0.68rem] text-pino/40">Simulado</span>
+                    <span className="text-[0.68rem] text-pino/40">Débito o crédito</span>
                   </button>
                 </div>
               </div>
@@ -146,7 +146,6 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
                     <Input placeholder="MM/AA" />
                     <Input placeholder="CVV" inputMode="numeric" />
                   </div>
-                  <p className="text-xs text-hoja">Pago simulado — no se realiza ningún cobro real.</p>
                 </div>
               )}
               <Button onClick={confirm} disabled={busy} className="w-full bg-pino py-6 text-base">

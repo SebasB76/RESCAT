@@ -216,9 +216,6 @@ export function Cart() {
                   Tarjeta
                 </button>
               </div>
-              {method === "cardMock" && (
-                <p className="text-xs text-hoja">Pago simulado — no se realiza ningún cobro real.</p>
-              )}
               <div className="flex items-center justify-between text-base font-semibold text-pino">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
