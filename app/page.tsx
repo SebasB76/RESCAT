@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { BoxCard, type DiscoveryBox } from "@/components/boxCard"
 import { Button } from "@/components/ui/button"
+import { SignOutButton } from "@/components/signOutButton"
 
 const DiscoveryMap = dynamic(() => import("@/components/discoveryMap"), { ssr: false })
 const GYE = { lat: -2.1709, lng: -79.9224 }
@@ -16,8 +17,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [view, setView] = useState<"list" | "map">("list")
+  const [signedIn, setSignedIn] = useState(false)
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user))
     function load(lat: number, lng: number) {
       setCenter({ lat, lng })
       supabase.rpc("list_boxes_near", { p_lat: lat, p_lng: lng }).then(({ data }) => {
@@ -39,7 +42,16 @@ export default function Home() {
           <h1 className="font-display text-3xl text-pino">Rescata comida cerca de ti</h1>
           {denied && <p className="text-sm text-hoja">Mostrando cajas en Guayaquil (activa tu ubicación para ver las más cercanas).</p>}
         </div>
-        <Link href="/login" className="text-sm text-pino underline">Entrar</Link>
+        <div className="flex items-center gap-3">
+          {signedIn ? (
+            <>
+              <Link href="/reservations" className="text-sm text-pino underline">Mis reservas</Link>
+              <SignOutButton className="h-8 px-3 py-0 text-xs" />
+            </>
+          ) : (
+            <Link href="/login" className="text-sm text-pino underline">Entrar</Link>
+          )}
+        </div>
       </div>
       <div className="mt-4 flex gap-2">
         <Button variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")} className={view === "list" ? "bg-pino" : ""}>Lista</Button>
