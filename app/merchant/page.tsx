@@ -30,7 +30,7 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
     comboReq,
   ])
 
-  const storeName = new Map((stores ?? []).map((s): [string, string] => [s.id, s.name]))
+  const storeNames = new Map((stores ?? []).map((s): [string, string] => [s.id, s.name]))
   const ventasTotal = (salesRows ?? []).reduce((sum, r) => sum + Number(r.ventasTotal ?? 0), 0)
   const nPedidos = (salesRows ?? []).reduce((sum, r) => sum + Number(r.nPedidos ?? 0), 0)
 
@@ -61,7 +61,7 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
       id: l.id,
       productName: l.productName,
       brand: l.brand,
-      tienda: storeName.get(l.storeId) ?? "—",
+      storeName: storeNames.get(l.storeId) ?? "—",
       days: l.daysToExpiry,
       qty: l.qty,
       rescatPrice: money(l.rescatPrice),

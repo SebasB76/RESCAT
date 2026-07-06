@@ -48,7 +48,7 @@ export function Cart() {
     try {
       const result = await createOrder({
         paymentMethod: method,
-        items: items.map((i) => ({ productId: i.productId, storeId: i.storeId, qty: i.qty, price: i.price })),
+        items: items.map((i) => ({ productId: i.productId, qty: i.qty })),
       })
       setCodes(result.map((r) => ({ ...r, storeName: names.get(r.storeId) ?? "Tienda" })))
       clear()
@@ -177,7 +177,7 @@ export function Cart() {
                             <button
                               onClick={() => removeItem(it.productId)}
                               aria-label="Eliminar"
-                              className="text-pino/40 hover:text-terracota"
+                              className="text-pino/40 hover:text-pino"
                             >
                               <Trash2Icon className="size-4" />
                             </button>

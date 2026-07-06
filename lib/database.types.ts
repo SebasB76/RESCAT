@@ -670,6 +670,13 @@ export type Database = {
           qtyRiesgo30d: number
         }[]
       }
+      create_order: {
+        Args: {
+          p_items: Json
+          p_payment_method: Database["public"]["Enums"]["payment_method"]
+        }
+        Returns: Json
+      }
     }
     Enums: {
       box_status: "active" | "soldOut" | "expired"

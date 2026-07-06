@@ -45,7 +45,7 @@ export default function Home() {
 
   const avgSavingsPct = useMemo(() => {
     if (!boxes.length) return null
-    const sum = boxes.reduce((acc, b) => acc + (1 - b.price / b.originalPrice), 0)
+    const sum = boxes.reduce((acc, b) => acc + (b.originalPrice > 0 ? 1 - b.price / b.originalPrice : 0), 0)
     return Math.round((sum / boxes.length) * 100)
   }, [boxes])
 

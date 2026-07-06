@@ -2,7 +2,7 @@ export type AlertRow = {
   id: string
   productName: string
   brand: string | null
-  tienda: string
+  storeName: string
   days: number
   qty: number
   rescatPrice: string
@@ -28,7 +28,7 @@ export function DashboardAlerts({ rows }: { rows: AlertRow[] }) {
             <tr key={r.id}>
               <td className="py-2 pr-2 font-medium text-pino">{r.productName}</td>
               <td className="py-2 pr-2 text-pino/60">{r.brand ?? "—"}</td>
-              <td className="py-2 pr-2 text-pino/60">{r.tienda}</td>
+              <td className="py-2 pr-2 text-pino/60">{r.storeName}</td>
               <td className="py-2 text-right font-semibold tabular-nums text-terracota">{r.days}d</td>
               <td className="py-2 text-right tabular-nums text-pino">{r.qty}</td>
               <td className="py-2 text-right tabular-nums text-pino">{r.rescatPrice}</td>

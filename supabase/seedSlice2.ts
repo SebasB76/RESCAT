@@ -5,6 +5,7 @@ config({ path: ".env.local" })
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const ZERO = "00000000-0000-0000-0000-000000000000"
+const round2 = (n: number) => Math.round(n * 100) / 100
 
 function loadConsts(path: string): Record<string, any> {
   const out: Record<string, any> = {}
@@ -37,9 +38,23 @@ async function main() {
   const { data: stores, error: sErr } = await admin.from("store").select("id,name")
   check("load stores", sErr)
   const jua = stores!.find((s) => s.name.includes("Juanita"))!.id
-  const mar = stores!.find((s) => s.name.includes("Mar"))!.id
+  const mar = stores!.find((s) => s.name.includes("Despensa"))!.id
   const storeOf = (tienda: string) => (tienda.includes("Juanita") ? jua : mar)
   const scopeStore: Record<string, string | null> = { todas: null, juanita: jua, maria: mar }
+
+  const marginOf = (cost: number, price: number) => (price > 0 ? Math.max(0, (price - cost) / price) : 0)
+  const prodMargin = new Map<string, number>()
+  const catAgg = new Map<string, { sum: number; n: number }>()
+  let allSum = 0, allN = 0
+  for (const c of CATALOGO) {
+    const m = marginOf(c.costo, c.precio_venta)
+    prodMargin.set(c.prod, m)
+    const a = catAgg.get(c.cat) ?? { sum: 0, n: 0 }
+    a.sum += m; a.n += 1; catAgg.set(c.cat, a)
+    allSum += m; allN += 1
+  }
+  const overallMargin = allN ? allSum / allN : 0.22
+  const catMargin = (cat: string) => { const a = catAgg.get(cat); return a && a.n ? a.sum / a.n : overallMargin }
 
   check("clear lot", (await admin.from("lot").delete().neq("id", ZERO)).error)
   check("clear product", (await admin.from("product").delete().neq("id", ZERO)).error)
@@ -73,16 +88,17 @@ async function main() {
 
   for (const [scope, storeId] of Object.entries(scopeStore)) {
     const v = VENTAS[scope]
-    check(`sales_kpi ${scope}`, (await admin.from("sales_kpi").insert({ storeId, ventasTotal: v.kpis.ventas_total, gananciaTotal: v.kpis.ganancia_total, nPedidos: v.kpis.n_pedidos, nClientes: v.kpis.n_clientes })).error)
-    check(`category_sales ${scope}`, (await admin.from("category_sales").insert(v.ventas_cat.map((r: any) => ({ storeId, category: r.cat, sales: r.ventas, profit: r.ganancia, qty: r.qty })))).error)
-    check(`monthly_sales ${scope}`, (await admin.from("monthly_sales").insert(v.tendencia.map((r: any) => ({ storeId, month: r.mes, sales: r.ventas, profit: r.ganancia })))).error)
-    check(`top_product ${scope}`, (await admin.from("top_product").insert(v.top_prods.map((r: any, i: number) => ({ storeId, rank: i + 1, name: r.prod, brand: r.marca, sales: r.ventas, profit: r.ganancia, qty: r.qty })))).error)
+    const gananciaTotal = round2((v.ventas_cat as any[]).reduce((s, r) => s + r.ventas * catMargin(r.cat), 0))
+    check(`sales_kpi ${scope}`, (await admin.from("sales_kpi").insert({ storeId, ventasTotal: v.kpis.ventas_total, gananciaTotal, nPedidos: v.kpis.n_pedidos, nClientes: v.kpis.n_clientes })).error)
+    check(`category_sales ${scope}`, (await admin.from("category_sales").insert(v.ventas_cat.map((r: any) => ({ storeId, category: r.cat, sales: r.ventas, profit: round2(r.ventas * catMargin(r.cat)), qty: r.qty })))).error)
+    check(`monthly_sales ${scope}`, (await admin.from("monthly_sales").insert(v.tendencia.map((r: any) => ({ storeId, month: r.mes, sales: r.ventas, profit: round2(r.ventas * overallMargin) })))).error)
+    check(`top_product ${scope}`, (await admin.from("top_product").insert(v.top_prods.map((r: any, i: number) => ({ storeId, rank: i + 1, name: r.prod, brand: r.marca, sales: r.ventas, profit: round2(r.ventas * (prodMargin.get(r.prod) ?? overallMargin)), qty: r.qty })))).error)
     check(`basket_rule ${scope}`, (await admin.from("basket_rule").insert((MB[scope] as any[]).map((r) => ({ storeId, a: r.a, b: r.b, catA: r.cat_a, catB: r.cat_b, freq: r.freq, confAB: r.conf_ab, confBA: r.conf_ba, lift: r.lift })))).error)
   }
 
   check("box tipo duo", (await admin.from("box").update({ tipo: "duo" }).ilike("title", "%desayuno%")).error)
   check("box tipo familia", (await admin.from("box").update({ tipo: "familia" }).ilike("title", "%frutas%")).error)
 
-  console.log(`seed slice2 done · ${products!.length} products · ${lotRows.length} lots · analytics for todas/juanita/maria`)
+  console.log(`seed slice2 done · ${products!.length} products · ${lotRows.length} lots · margins applied · analytics for todas/juanita/maria`)
 }
 main()

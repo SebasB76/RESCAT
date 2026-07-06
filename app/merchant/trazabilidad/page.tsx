@@ -7,9 +7,10 @@ export default async function MerchantTraceability({ searchParams }: { searchPar
   const { storeId } = resolveStoreScope(store)
   const supabase = await createServerClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
   const [{ data: lots }, { data: stores }] = await Promise.all([
     supabase.rpc("lots_with_level", { p_store: storeId }),
-    supabase.from("store").select("id, name"),
+    supabase.from("store").select("id, name").eq("ownerId", user?.id ?? ""),
   ])
 
   const storeNames: Record<string, string> = Object.fromEntries((stores ?? []).map((s) => [s.id, s.name] as const))

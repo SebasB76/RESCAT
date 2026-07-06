@@ -17,7 +17,7 @@ export type DiscoveryBox = {
 }
 
 export function BoxCard({ box }: { box: DiscoveryBox }) {
-  const off = Math.round((1 - box.price / box.originalPrice) * 100)
+  const off = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
   return (
     <Link href={`/box/${box.id}`} className="overflow-hidden rounded-2xl border border-pino/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative h-40 bg-cream">
