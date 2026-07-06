@@ -1,0 +1,88 @@
+import { createClient } from "@supabase/supabase-js"
+import { config } from "dotenv"
+import { readFileSync } from "node:fs"
+config({ path: ".env.local" })
+
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const ZERO = "00000000-0000-0000-0000-000000000000"
+
+function loadConsts(path: string): Record<string, any> {
+  const out: Record<string, any> = {}
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    const m = line.match(/^const (\w+)=(.*);\s*$/)
+    if (!m) continue
+    const [, name, json] = m
+    if (json === "null") { out[name] = null; continue }
+    try { out[name] = JSON.parse(json) } catch { out[name] = null }
+  }
+  return out
+}
+
+function dateInDays(n: number) {
+  const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10)
+}
+
+function check(label: string, error: unknown) {
+  if (error) { console.error(`✗ ${label}`, error); process.exit(1) }
+}
+
+async function main() {
+  const store = loadConsts("legacy/rescat_store.js")
+  const data = loadConsts("legacy/rescat_data.js")
+  const CATALOGO = store.CATALOGO as any[]
+  const stock = (data.DATA?.stock ?? []) as any[]
+  const VENTAS = data.VENTAS_DATA as Record<string, any>
+  const MB = data.MB_DATA as Record<string, any>
+
+  const { data: stores, error: sErr } = await admin.from("store").select("id,name")
+  check("load stores", sErr)
+  const jua = stores!.find((s) => s.name.includes("Juanita"))!.id
+  const mar = stores!.find((s) => s.name.includes("Mar"))!.id
+  const storeOf = (tienda: string) => (tienda.includes("Juanita") ? jua : mar)
+  const scopeStore: Record<string, string | null> = { todas: null, juanita: jua, maria: mar }
+
+  check("clear lot", (await admin.from("lot").delete().neq("id", ZERO)).error)
+  check("clear product", (await admin.from("product").delete().neq("id", ZERO)).error)
+  for (const t of ["sales_kpi", "category_sales", "monthly_sales", "top_product", "basket_rule"]) {
+    check(`clear ${t}`, (await admin.from(t).delete().neq("id", ZERO)).error)
+  }
+
+  const prodMap = new Map<string, any>()
+  const addProd = (storeId: string, p: any) => {
+    const key = `${storeId}|${p.name}`
+    if (!prodMap.has(key)) prodMap.set(key, { storeId, name: p.name, brand: p.brand, category: p.category, subcategory: p.subcategory, cost: p.cost, price: p.price })
+  }
+  for (const c of CATALOGO) {
+    const base = { name: c.prod, brand: c.marca, category: c.cat, subcategory: c.subcat, cost: c.costo, price: c.precio_venta }
+    if (c.tienda_jua) addProd(jua, base)
+    if (c.tienda_mar) addProd(mar, base)
+  }
+  for (const s of stock) {
+    addProd(storeOf(s.tienda), { name: s.prod, brand: s.marca, category: s.cat, subcategory: s.subcat, cost: s.costo, price: s.precio_venta })
+  }
+
+  const { data: products, error: pErr } = await admin.from("product").insert([...prodMap.values()]).select("id,storeId,name")
+  check("insert products", pErr)
+  const idOf = new Map(products!.map((p) => [`${p.storeId}|${p.name}`, p.id]))
+
+  const lotRows = stock.map((s) => {
+    const storeId = storeOf(s.tienda)
+    return { productId: idOf.get(`${storeId}|${s.prod}`), storeId, qty: s.qty, unitCost: s.costo, price: s.precio_venta, expiryDate: dateInDays(s.dias), receivedAt: s.f_ing }
+  }).filter((l) => l.productId)
+  check("insert lots", (await admin.from("lot").insert(lotRows)).error)
+
+  for (const [scope, storeId] of Object.entries(scopeStore)) {
+    const v = VENTAS[scope]
+    check(`sales_kpi ${scope}`, (await admin.from("sales_kpi").insert({ storeId, ventasTotal: v.kpis.ventas_total, gananciaTotal: v.kpis.ganancia_total, nPedidos: v.kpis.n_pedidos, nClientes: v.kpis.n_clientes })).error)
+    check(`category_sales ${scope}`, (await admin.from("category_sales").insert(v.ventas_cat.map((r: any) => ({ storeId, category: r.cat, sales: r.ventas, profit: r.ganancia, qty: r.qty })))).error)
+    check(`monthly_sales ${scope}`, (await admin.from("monthly_sales").insert(v.tendencia.map((r: any) => ({ storeId, month: r.mes, sales: r.ventas, profit: r.ganancia })))).error)
+    check(`top_product ${scope}`, (await admin.from("top_product").insert(v.top_prods.map((r: any, i: number) => ({ storeId, rank: i + 1, name: r.prod, brand: r.marca, sales: r.ventas, profit: r.ganancia, qty: r.qty })))).error)
+    check(`basket_rule ${scope}`, (await admin.from("basket_rule").insert((MB[scope] as any[]).map((r) => ({ storeId, a: r.a, b: r.b, catA: r.cat_a, catB: r.cat_b, freq: r.freq, confAB: r.conf_ab, confBA: r.conf_ba, lift: r.lift })))).error)
+  }
+
+  check("box tipo duo", (await admin.from("box").update({ tipo: "duo" }).ilike("title", "%desayuno%")).error)
+  check("box tipo familia", (await admin.from("box").update({ tipo: "familia" }).ilike("title", "%frutas%")).error)
+
+  console.log(`seed slice2 done · ${products!.length} products · ${lotRows.length} lots · analytics for todas/juanita/maria`)
+}
+main()

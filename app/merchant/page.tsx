@@ -1,27 +1,32 @@
-import Link from "next/link"
 import { createServerClient } from "@/lib/supabase/server"
+import { resolveStoreScope } from "@/lib/storeScope"
 
-export default async function MerchantDashboard() {
+const money = (n: number) => `$${Number(n).toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+export default async function MerchantDashboard({ searchParams }: { searchParams: Promise<{ store?: string }> }) {
+  const { store } = await searchParams
+  const { storeId } = resolveStoreScope(store)
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: stores } = await supabase.from("store").select("id").eq("ownerId", user!.id)
-  const storeIds = (stores ?? []).map((s) => s.id)
-  const { data: boxes } = await supabase.from("box").select("*")
-    .in("storeId", storeIds.length ? storeIds : ["00000000-0000-0000-0000-000000000000"])
-    .order("createdAt", { ascending: false })
+  const { data } = await supabase.rpc("inventory_kpis", { p_store: storeId })
+  const k = data?.[0]
+
+  const cards = k ? [
+    { label: "Valor inventario", value: money(k.valorTotal) },
+    { label: "Lotes críticos ≤7d", value: k.criticos, urgent: true },
+    { label: "En alerta 8–14d", value: k.enAlerta },
+    { label: "Valor en riesgo 30d", value: money(k.valorRiesgo30d) },
+  ] : []
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-pino">Mis cajas</h1>
-      {!boxes?.length && <p className="mt-4 text-hoja">Aún no tienes cajas. Crea la primera.</p>}
-      <div className="mt-6 grid gap-3">
-        {boxes?.map((b) => (
-          <Link key={b.id} href={`/merchant/boxes/${b.id}`} className="rounded-xl border border-pino/10 bg-white p-4">
-            <div className="flex justify-between">
-              <span className="font-medium">{b.title}</span>
-              <span className="text-sm text-hoja">${b.price} · stock {b.stockQty} · {b.status}</span>
-            </div>
-          </Link>
+      <h1 className="font-display text-2xl text-pino">Dashboard</h1>
+      <p className="mt-1 text-sm text-hoja">Resumen general del inventario.</p>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map((c) => (
+          <div key={c.label} className="rounded-xl border border-pino/10 bg-white p-4">
+            <p className="text-xs uppercase tracking-wide text-pino/40">{c.label}</p>
+            <p className={`mt-1 font-display text-2xl ${c.urgent ? "text-terracota" : "text-pino"}`}>{c.value}</p>
+          </div>
         ))}
       </div>
     </div>
