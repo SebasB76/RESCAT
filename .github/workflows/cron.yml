@@ -1,0 +1,17 @@
+name: daily-maintenance
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Expire reservations and keep Supabase awake
+        run: |
+          curl -sf -X POST "$SUPABASE_URL/rest/v1/rpc/expire_reservations" \
+            -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" \
+            -H "Content-Type: application/json" -d '{}'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
