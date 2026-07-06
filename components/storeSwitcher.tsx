@@ -21,12 +21,12 @@ function Switcher({ stores }: { stores: StoreOption[] }) {
   const options: StoreOption[] = [{ id: "todas", name: "Ambas" }, ...stores]
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-pino/15 bg-cream p-0.5">
+    <div className="flex items-center gap-0.5 rounded-lg border border-cream/10 bg-black/15 p-1">
       {options.map((o) => (
         <button
           key={o.id}
           onClick={() => set(o.id)}
-          className={`rounded-md px-2.5 py-1 text-xs transition ${current === o.id ? "bg-pino text-cream" : "text-pino/70 hover:text-pino"}`}
+          className={`flex-1 cursor-pointer truncate rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors duration-150 ${current === o.id ? "bg-cream text-pino shadow-sm" : "text-cream/60 hover:bg-cream/10 hover:text-cream"}`}
         >
           {o.name}
         </button>

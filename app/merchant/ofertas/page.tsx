@@ -41,7 +41,7 @@ export default async function MerchantOfertas({ searchParams }: { searchParams: 
   return (
     <div>
       <div className="rounded-2xl border border-dorado/30 bg-dorado/10 p-4">
-        <h1 className="font-display text-2xl text-pino">Ofertas Especiales</h1>
+        <h1 className="font-display text-3xl text-pino">Ofertas Especiales</h1>
         <p className="mt-1 text-sm text-hoja">Solo bajada de precio · Productos por vencer que no van en caja sorpresa</p>
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <span className="rounded-full bg-white px-3 py-1 font-medium text-pino">{offers.length} ofertas activas</span>

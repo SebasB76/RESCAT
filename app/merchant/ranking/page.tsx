@@ -3,7 +3,11 @@ import { resolveStoreScope } from "@/lib/storeScope"
 
 const money = (n: number) => `$${Number(n).toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const count = (n: number) => Number(n).toLocaleString("es-EC")
-const medals = ["🥇", "🥈", "🥉"]
+const rankBadge: Record<number, string> = {
+  1: "bg-dorado text-pino",
+  2: "bg-pino/15 text-pino",
+  3: "bg-terracota/20 text-terracota",
+}
 
 export default async function MerchantRanking({ searchParams }: { searchParams: Promise<{ store?: string }> }) {
   const { store } = await searchParams
@@ -24,7 +28,7 @@ export default async function MerchantRanking({ searchParams }: { searchParams: 
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="font-display text-2xl text-pino">Top 20 Productos</h1>
+        <h1 className="font-display text-3xl text-pino">Top 20 Productos</h1>
         <span className="text-sm text-hoja">{scopeLabel}</span>
       </div>
       <p className="mt-1 text-sm text-pino/60">Ranking acumulado por ganancia.</p>
@@ -51,10 +55,11 @@ export default async function MerchantRanking({ searchParams }: { searchParams: 
                   const top3 = p.rank <= 3
                   const margin = p.sales > 0 ? (p.profit / p.sales) * 100 : 0
                   return (
-                    <tr key={p.id} className={`border-b border-pino/5 last:border-0 ${top3 ? "bg-dorado/5" : ""}`}>
-                      <td className={`px-4 py-3 font-semibold tabular-nums ${top3 ? "text-dorado" : "text-pino/50"}`}>
-                        {top3 ? <span className="mr-1">{medals[p.rank - 1]}</span> : null}
-                        {p.rank}
+                    <tr key={p.id} className={`border-b border-pino/5 transition-colors last:border-0 hover:bg-cream/50 ${top3 ? "bg-dorado/5" : ""}`}>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex size-7 items-center justify-center rounded-full text-xs font-bold tabular-nums ${rankBadge[p.rank] ?? "text-pino/40"}`}>
+                          {p.rank}
+                        </span>
                       </td>
                       <td className="px-4 py-3 font-medium text-pino">{p.name}</td>
                       <td className="px-4 py-3 text-xs uppercase tracking-wide text-pino/50">{p.brand ?? "—"}</td>

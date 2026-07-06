@@ -60,7 +60,7 @@ export default async function MerchantVentas({ searchParams }: { searchParams: P
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="font-display text-2xl text-pino">Ventas & Márgenes</h1>
+        <h1 className="font-display text-3xl text-pino">Ventas & Márgenes</h1>
         <span className="text-sm text-hoja">{scopeLabel}</span>
       </div>
       <p className="mt-1 text-sm text-pino/60">Historial de ventas y márgenes por tienda.</p>

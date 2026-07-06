@@ -18,7 +18,7 @@ export default async function MerchantCesta({
   return (
     <div>
       <div>
-        <h1 className="font-display text-2xl text-pino">Análisis de Cesta (MBA)</h1>
+        <h1 className="font-display text-3xl text-pino">Análisis de Cesta (MBA)</h1>
         <p className="mt-1 text-sm text-hoja">
           Reglas de asociación de compra · {rules.length} {rules.length === 1 ? "regla" : "reglas"}
           {storeId ? " · tienda seleccionada" : " · ambas tiendas"}

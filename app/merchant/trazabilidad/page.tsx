@@ -38,7 +38,7 @@ export default async function MerchantTraceability({ searchParams }: { searchPar
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-pino">Trazabilidad de inventario</h1>
+        <h1 className="font-display text-3xl text-pino">Trazabilidad de inventario</h1>
         <p className="mt-1 text-sm text-pino/60">Todos los lotes en percha, ordenados por urgencia de caducidad.</p>
       </div>
       <TraceabilityTable rows={rows} />

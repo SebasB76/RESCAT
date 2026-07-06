@@ -72,7 +72,7 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl text-pino">Dashboard</h1>
+        <h1 className="font-display text-3xl text-pino">Dashboard</h1>
         <p className="mt-1 text-sm text-hoja">Resumen del inventario y las ventas.</p>
       </div>
 
