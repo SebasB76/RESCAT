@@ -1,0 +1,19 @@
+# OS / WSL
+*:Zone.Identifier
+.DS_Store
+
+# Node / Next
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
