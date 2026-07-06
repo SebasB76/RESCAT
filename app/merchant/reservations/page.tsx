@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { confirmPickup } from "@/actions/reservations"
 import { Button } from "@/components/ui/button"
+import { money, statusLabel } from "@/lib/format"
 
 export default async function MerchantReservations() {
   const supabase = await createServerClient()
@@ -27,7 +28,7 @@ export default async function MerchantReservations() {
             <div>
               <div className="font-mono font-medium">{r.code}</div>
               <div className="text-sm text-hoja">
-                {(r.box as { title: string }).title} · ${r.amount} · {r.paymentMethod === "cashOnPickup" ? "efectivo" : "tarjeta"} · {r.status}
+                {(r.box as { title: string }).title} · {money(r.amount)} · {r.paymentMethod === "cashOnPickup" ? "efectivo" : "tarjeta"} · {statusLabel(r.status)}
               </div>
             </div>
             {r.status !== "pickedUp" && (

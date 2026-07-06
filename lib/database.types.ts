@@ -622,6 +622,7 @@ export type Database = {
           bestBefore: string | null
           pickupEnd: string
           tipo: Database["public"]["Enums"]["box_tipo"]
+          items: string[]
           storeName: string
           neighborhood: string | null
           lat: number
