@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RESCAT · Panel PYME</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g950:#061A0F;--g900:#0A2918;--g800:#0F3D22;--g700:#155C31;
+  --g600:#1A7A40;--g500:#1E8C49;--g400:#25A856;--g300:#4DC97A;
+  --g100:#C8EFD4;--g50:#EDF8F1;
+  --ink:#0A1F10;--mid:#3D5E47;--mute:#7A9E85;--bord:#C8E0D0;
+  --bg:#F5FAF6;--white:#FFFFFF;
+  --red:#DC2626;--red-l:#FEF2F2;
+  --orange:#EA580C;--orange-l:#FFF7ED;
+  --amber:#D97706;--amber-l:#FFFBEB;
+  --blue:#2563EB;--blue-l:#EFF6FF;
+  --ff:'Inter',system-ui,sans-serif;
+  --ffh:'Libre Baskerville',Georgia,serif;
+  --sw:224px;--r:10px;--r-lg:16px;
+  --sh:0 1px 3px rgba(10,41,24,.06),0 2px 8px rgba(10,41,24,.04);
+  --sh-lg:0 6px 24px rgba(10,41,24,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.sb{width:var(--sw);flex-shrink:0;background:var(--g950);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.sb-logo{padding:1.4rem 1.3rem 1.1rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-wordmark{font-family:var(--ffh);font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:-.3px}
+.sb-wordmark em{color:var(--g300);font-style:normal}
+.sb-tagline{font-size:.65rem;color:#fff;margin-top:2px;font-weight:400;letter-spacing:.3px}
+.sb-nav{flex:1;padding:.75rem .75rem}
+.sb-sec{font-size:.6rem;color:rgba(255,255,255,.2);font-weight:600;letter-spacing:1.2px;text-transform:uppercase;padding:.75rem .55rem .3rem}
+.sb-btn{display:flex;align-items:center;gap:9px;padding:.52rem .75rem;border-radius:8px;margin-bottom:2px;color:rgba(255,255,255,.45);font-size:.8rem;font-weight:400;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s;font-family:var(--ff)}
+.sb-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
+.sb-btn.on{background:rgba(30,140,73,.15);color:var(--g300)}
+.sb-bdg{margin-left:auto;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:20px;background:var(--red);color:#fff}
+.sb-bdg.w{background:var(--amber)}
+.sb-foot{padding:.9rem 1.3rem;border-top:1px solid rgba(255,255,255,.06);font-size:.67rem;color:rgba(255,255,255,.2);line-height:1.7}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--g300);margin-right:5px;animation:pdot 2s infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.3}}
+.pyme-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);border-radius:7px;padding:.38rem .75rem;font-size:.75rem;font-family:var(--ff);cursor:pointer;text-align:left;width:100%;transition:all .15s}
+.pyme-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85)}
+.pyme-btn.pyme-on{background:rgba(30,140,73,.2);border-color:rgba(77,201,122,.3);color:var(--g300)}
+.app{display:flex;min-height:100vh}
+.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:1px solid var(--bord);padding:.8rem 1.8rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--sh)}
+.tb-l h1{font-size:.92rem;font-weight:600;color:var(--ink)}
+.tb-l p{font-size:.7rem;color:var(--mute);margin-top:1px}
+.tb-r{display:flex;gap:7px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:.4rem .9rem;border-radius:8px;font-size:.78rem;font-weight:500;border:none;cursor:pointer;transition:all .15s;font-family:var(--ff)}
+.btn-p{background:var(--g600);color:#fff}.btn-p:hover{background:var(--g800)}
+.btn-g{background:none;border:1.5px solid var(--bord);color:var(--mid)}.btn-g:hover{border-color:var(--g400);color:var(--g600)}
+.content{padding:1.5rem 1.8rem}
+.krow{display:grid;grid-template-columns:repeat(5,1fr);gap:.85rem;margin-bottom:1.4rem}
+.kpi{background:var(--white);border-radius:var(--r-lg);padding:.95rem 1.1rem;box-shadow:var(--sh);border:1px solid var(--bord);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--_a,var(--g500))}
+.kl{font-size:.65rem;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}
+.kv{font-size:1.55rem;font-weight:700;line-height:1.1;margin:4px 0 2px;letter-spacing:-1px}
+.ks{font-size:.68rem;color:var(--mute)}
+.c-g{color:var(--g500)}.c-r{color:var(--red)}.c-a{color:var(--amber)}.c-o{color:var(--orange)}.c-b{color:var(--blue)}
+.card{background:var(--white);border-radius:var(--r-lg);border:1px solid var(--bord);box-shadow:var(--sh);overflow:hidden}
+.chd{padding:.8rem 1.2rem;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between}
+.chd h3{font-size:.85rem;font-weight:600;color:var(--ink)}
+.chd p{font-size:.7rem;color:var(--mute);margin-top:1px}
+.cbody{padding:.95rem 1.2rem}
+.clink{font-size:.74rem;color:var(--g500);font-weight:600;cursor:pointer;white-space:nowrap;background:none;border:none;font-family:var(--ff)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.mb16{margin-bottom:1rem}.mb24{margin-bottom:1.5rem}
+.bc{display:flex;flex-direction:column;gap:9px}
+.bcrow{display:flex;align-items:center;gap:9px}
+.bclbl{font-size:.74rem;color:var(--mid);width:130px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bctrk{flex:1;background:var(--bg);border-radius:4px;height:20px;overflow:hidden}
+.bcfil{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 7px;color:#fff;font-size:.68rem;font-weight:600;transition:width .9s cubic-bezier(.4,0,.2,1);min-width:36px;white-space:nowrap}
+.bcval{font-size:.72rem;color:var(--mute);min-width:62px;text-align:right;flex-shrink:0}
+.tw{max-height:440px;overflow-y:auto}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:.63rem;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.5px;padding:.5rem .85rem;border-bottom:2px solid var(--bord);white-space:nowrap;position:sticky;top:0;background:var(--white);z-index:1}
+.tbl td{padding:.55rem .85rem;border-bottom:1px solid var(--bord);font-size:.79rem;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:#F5FAF6;cursor:pointer}
+.nb{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:.63rem;font-weight:600;white-space:nowrap}
+.nv{background:var(--red-l);color:var(--red)}.nc{background:var(--orange-l);color:var(--orange)}
+.na{background:var(--amber-l);color:var(--amber)}.nad{background:#FFF8F0;color:#B7791F}
+.nok{background:var(--g50);color:var(--g600)}
+.ubar{display:flex;align-items:center;gap:6px}
+.utrk{flex:1;height:4px;background:var(--bord);border-radius:99px;overflow:hidden}
+.ufil{height:100%;border-radius:99px;transition:width .8s ease}
+.ulbl{font-size:.63rem;font-weight:500;width:28px;text-align:right;flex-shrink:0}
+.lift{display:inline-block;padding:2px 6px;border-radius:20px;font-size:.65rem;font-weight:600}
+.lh{background:var(--g50);color:var(--g600)}.lm{background:var(--blue-l);color:var(--blue)}
+.ll{background:var(--bg);color:var(--mute);border:1px solid var(--bord)}
+.filtros{display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:.8rem 1.2rem;border-bottom:1px solid var(--bord)}
+.fbtn{background:none;border:1.5px solid var(--bord);color:var(--mute);border-radius:20px;padding:.26rem .8rem;font-size:.72rem;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--ff)}
+.fbtn:hover{border-color:var(--g400);color:var(--g500)}.fbtn.on{background:var(--g800);border-color:var(--g800);color:#fff}
+.fsel{padding:.26rem .65rem;border:1.5px solid var(--bord);border-radius:20px;font-size:.72rem;color:var(--mid);background:var(--white)}
+.fsrch{margin-left:auto;padding:.26rem .7rem;border:1.5px solid var(--bord);border-radius:20px;font-size:.75rem;outline:none;width:180px}
+.fsrch:focus{border-color:var(--g500)}
+.gcajas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.9rem}
+.caja-pyme{background:var(--white);border-radius:var(--r-lg);border:1px solid var(--bord);overflow:hidden;box-shadow:var(--sh)}
+.caja-pyme-img{height:130px;position:relative;overflow:hidden}
+.caja-pyme-img img{width:100%;height:100%;object-fit:cover}
+.caja-pyme-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,26,15,.75),transparent 55%);padding:.75rem;display:flex;flex-direction:column;justify-content:flex-end}
+.caja-pyme-nom{color:#fff;font-size:.9rem;font-weight:600;font-family:var(--ffh)}
+.caja-pyme-chip{background:rgba(255,255,255,.15);backdrop-filter:blur(6px);color:#fff;font-size:.6rem;font-weight:600;padding:2px 7px;border-radius:20px;width:fit-content;margin-bottom:4px;border:1px solid rgba(255,255,255,.18);text-transform:uppercase;letter-spacing:.4px}
+.caja-pyme-body{padding:.85rem}
+.cp-row{display:flex;justify-content:space-between;font-size:.76rem;padding:.25rem 0;border-bottom:1px solid var(--g50);color:var(--mid)}
+.cp-row:last-of-type{border-bottom:none}
+.cp-row span:last-child{font-weight:600;color:var(--ink)}
+.caja-pyme-foot{display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--bord)}
+.cpf-precio{font-family:var(--ffh);font-size:1.15rem;font-weight:700;color:var(--g500)}
+.cpf-desc{background:var(--orange);color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px}
+.sug{display:flex;align-items:center;gap:10px;padding:.6rem .8rem;border-radius:7px;border:1px solid var(--bord);background:var(--bg);margin-bottom:4px;font-size:.8rem}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--g900);color:#fff;padding:.6rem 1.1rem;border-radius:9px;font-size:.79rem;font-weight:500;box-shadow:var(--sh-lg);z-index:999;transform:translateY(60px);opacity:0;transition:all .25s;border-left:3px solid var(--g300)}
+.toast.show{transform:translateY(0);opacity:1}
+.empty{text-align:center;padding:2.5rem;color:var(--mute);font-size:.83rem}
+.page{display:none}.page.on{display:block}
+@media(max-width:1100px){.krow{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-wordmark">RES<em>CAT</em></div>
+    <div class="sb-tagline">Panel PYME · Guayaquil</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Operación</div>
+    <button class="sb-btn on" onclick="goPage('dashboard',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">📊</span>Dashboard</button>
+    <button class="sb-btn" onclick="goPage('trazabilidad',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">📦</span>Trazabilidad<span class="sb-bdg" id="nb-c">–</span></button>
+    <button class="sb-btn" onclick="goPage('cajas',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">🎁</span>Cajas Sorpresa</button>
+    <button class="sb-btn" onclick="goPage('ofertas',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">🏷️</span>Ofertas Especiales<span class="sb-bdg w" id="nb-w">–</span></button>
+    <div class="sb-sec">Análisis</div>
+    <button class="sb-btn" onclick="goPage('basket',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">🛒</span>Cesta de Compra</button>
+    <button class="sb-btn" onclick="goPage('ventas',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">📈</span>Ventas &amp; Margen</button>
+    <button class="sb-btn" onclick="goPage('ranking',this)"><span style="font-size:.95rem;width:18px;text-align:center;display:inline-block">🏆</span>Top Productos</button>
+  </nav>
+  <div style="padding:.75rem 1rem;border-top:1px solid rgba(255,255,255,.06)">
+    <div style="font-size:.58rem;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:.5rem">Vista de tienda</div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <button onclick="cambiarPyme('todas',this)" class="pyme-btn pyme-on">Ambas tiendas</button>
+      <button onclick="cambiarPyme('juanita',this)" class="pyme-btn">Mini Market Juanita</button>
+      <button onclick="cambiarPyme('maria',this)" class="pyme-btn">Despensa Doña María</button>
+    </div>
+  </div>
+  <div class="sb-foot"><span class="dot"></span>27 jun 2026<br>Mini Market Juanita<br>Despensa Doña María</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-l"><h1 id="ptitle">Dashboard General</h1><p id="psub">Vista consolidada de stock y ventas</p></div>
+    <div class="tb-r">
+      <button class="btn btn-g" onclick="exportCSV()">Exportar CSV</button>
+      <button class="btn btn-p" onclick="goPage('cajas')">+ Nueva Caja</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <div class="page on" id="page-dashboard">
+      <div class="krow">
+        <div class="kpi" style="--_a:var(--g500)"><div class="kl">Valor Inventario</div><div class="kv c-g" id="kv1">–</div><div class="ks" id="ks1">–</div></div>
+        <div class="kpi" style="--_a:var(--red)"><div class="kl">Crítico ≤7 días</div><div class="kv c-r" id="kv2">–</div><div class="ks" id="ks2">–</div></div>
+        <div class="kpi" style="--_a:var(--amber)"><div class="kl">Alerta 8–14 días</div><div class="kv c-a" id="kv3">–</div><div class="ks" id="ks3">–</div></div>
+        <div class="kpi" style="--_a:var(--blue)"><div class="kl">Ventas Históricas</div><div class="kv c-b" id="kv4">–</div><div class="ks" id="ks4">–</div></div>
+        <div class="kpi" style="--_a:var(--orange)"><div class="kl">Riesgo 30 días</div><div class="kv c-o" id="kv5">–</div><div class="ks" id="ks5">–</div></div>
+      </div>
+      <div class="g2 mb24">
+        <div class="card">
+          <div class="chd"><div><h3>Alertas Urgentes</h3><p>Lotes críticos y en alerta</p></div><button class="clink" onclick="goPage('trazabilidad')">Ver todos →</button></div>
+          <div class="tw" style="max-height:290px"><table class="tbl"><thead><tr><th>Producto</th><th>Tienda</th><th>Días</th><th>Nivel</th><th>Urgencia</th></tr></thead><tbody id="dash-alert"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="chd"><div><h3>Stock por Categoría</h3><p>Valor en percha</p></div></div>
+          <div class="cbody"><div class="bc" id="dash-cat"></div></div>
+        </div>
+      </div>
+      <div class="card mb24">
+        <div class="chd"><div><h3>Top Combos de Compra</h3><p>Análisis de cesta · lift = fuerza de la asociación</p></div><button class="clink" onclick="goPage('basket')">Ver análisis →</button></div>
+        <div class="tw" style="max-height:270px"><table class="tbl"><thead><tr><th>Producto A</th><th>Producto B</th><th>Frecuencia</th><th>Conf. A→B</th><th>Lift</th></tr></thead><tbody id="dash-mb"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-trazabilidad">
+      <div class="card mb16">
+        <div class="filtros">
+          <button class="fbtn on" onclick="fStock(null,this)">Todos</button>
+          <button class="fbtn" onclick="fStock('CRITICO',this)">Crítico ≤7d</button>
+          <button class="fbtn" onclick="fStock('ALERTA',this)">Alerta 8–14d</button>
+          <button class="fbtn" onclick="fStock('ADVERTENCIA',this)">Prev. 15–30d</button>
+          <button class="fbtn" onclick="fStock('OK',this)">OK</button>
+          <select class="fsel" id="ftienda" onchange="fStock()"><option value="">Ambas tiendas</option><option>Mini Market Juanita</option><option>Despensa Doña María</option></select>
+          <select class="fsel" id="fcat" onchange="fStock()"><option value="">Todas las categorías</option></select>
+          <input class="fsrch" id="fbuscar" type="text" placeholder="Buscar producto..." oninput="fStock()">
+        </div>
+      </div>
+      <div class="card">
+        <div class="chd"><div><h3 id="scnt">–</h3><p>Clic en fila → sugerencia MBA</p></div><button class="btn btn-g" style="font-size:.72rem" onclick="exportCSV()">Exportar CSV</button></div>
+        <div class="tw"><table class="tbl"><thead><tr><th>ID Lote</th><th>Producto</th><th>Marca</th><th>Categoría</th><th>Tienda</th><th>Ingreso</th><th>Caducidad</th><th>Días</th><th>Urgencia</th><th>Qty</th><th>Costo</th><th>Valor</th><th>Desc.</th><th>Precio RESCAT</th><th>Nivel</th></tr></thead><tbody id="stbl"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-cajas">
+      <div style="margin-bottom:1rem"><h2 style="font-size:1rem;font-weight:600">Cajas Sorpresa activas</h2><p style="font-size:.78rem;color:var(--mute);margin-top:2px">Generadas con lotes urgentes · Las mismas que ve el cliente</p></div>
+      <div class="gcajas" id="cajas-pyme"></div>
+    </div>
+
+    <div class="page" id="page-ofertas">
+      <div class="card mb16" style="overflow:hidden">
+        <div style="background:var(--orange-l);border-bottom:1px solid var(--bord);padding:.85rem 1.2rem">
+          <h3 style="font-size:.85rem;font-weight:600;color:var(--orange)">Ofertas Especiales — Solo bajada de precio</h3>
+          <p style="font-size:.72rem;color:var(--amber);margin-top:2px">Proteínas urgentes que no van en caja sorpresa</p>
+        </div>
+      </div>
+      <div class="gcajas" id="ofertas-grid"></div>
+    </div>
+
+    <div class="page" id="page-basket">
+      <div class="g2 mb24">
+        <div class="card">
+          <div class="chd"><div><h3>Cross-Selling por Producto</h3><p>¿Qué más compran junto con este producto?</p></div></div>
+          <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--bord);display:flex;gap:7px">
+            <select id="mbsel" style="flex:1;padding:.4rem .7rem;border:1.5px solid var(--bord);border-radius:7px;font-size:.8rem"><option value="">Seleccionar producto...</option></select>
+            <button class="btn btn-p" onclick="buscarSugs()">Buscar</button>
+          </div>
+          <div class="cbody" id="mbsug"><div class="empty">Selecciona un producto</div></div>
+        </div>
+        <div class="card">
+          <div class="chd"><div><h3>Cómo leer el análisis</h3></div></div>
+          <div class="cbody" style="display:flex;flex-direction:column;gap:.85rem;font-size:.81rem">
+            <div style="padding:.75rem;background:var(--g50);border-radius:7px;border-left:3px solid var(--g400)"><strong>Frecuencia</strong><br><span style="color:var(--mid)">Veces que el par aparece en el mismo cliente-mes.</span></div>
+            <div style="padding:.75rem;background:var(--blue-l);border-radius:7px;border-left:3px solid var(--blue)"><strong>Confianza A→B</strong><br><span style="color:var(--mid)">"De quienes compran A, el X% también compra B."</span></div>
+            <div style="padding:.75rem;background:var(--orange-l);border-radius:7px;border-left:3px solid var(--orange)"><strong>Lift &gt; 1.5</strong> = asociación real.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chd"><div><h3>Todas las Reglas de Asociación</h3><p id="mbcnt">–</p></div><input id="mbsearch" type="text" placeholder="Filtrar..." style="padding:.32rem .7rem;border:1.5px solid var(--bord);border-radius:20px;font-size:.74rem;outline:none" oninput="renderBasket()"></div>
+        <div class="tw"><table class="tbl"><thead><tr><th>Producto A</th><th>Producto B</th><th>Frecuencia</th><th>Conf. A→B</th><th>Conf. B→A</th><th>Lift</th></tr></thead><tbody id="mbtbl"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-ventas">
+      <div class="g2 mb24">
+        <div class="card"><div class="chd"><div><h3>Ventas Netas por Categoría</h3></div></div><div class="cbody"><div class="bc" id="v-cat"></div></div></div>
+        <div class="card"><div class="chd"><div><h3>Margen %</h3></div></div><div class="cbody"><div class="bc" id="v-mgn"></div></div></div>
+      </div>
+      <div class="card"><div class="chd"><div><h3>Tendencia Mensual</h3><p id="v-sub">Historial completo</p></div></div><div class="cbody"><div class="bc" id="v-trend"></div></div></div>
+    </div>
+
+    <div class="page" id="page-ranking">
+      <div class="card">
+        <div class="chd"><div><h3>Top 20 Productos por Ganancia</h3><p id="r-sub">Ranking acumulado</p></div></div>
+        <table class="tbl"><thead><tr><th>#</th><th>Producto</th><th>Marca</th><th>Ganancia</th><th>Ventas</th><th>Unidades</th><th>Margen %</th></tr></thead><tbody id="rtbl"></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="rescat_data.js"></script>
+<script src="rescat_store.js"></script>
+<script src="rescat_images.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   RESCAT Panel PYME — Script completo y limpio
+   Orden correcto: primero variables, luego helpers, luego renders
+═══════════════════════════════════════════════════════════ */
+
+// ── CONSTANTES ───────────────────────────────────────────────────────────────
+var CC = {'Abarrotes':'#2563EB','Bebidas':'#7C3AED','Frutas y Verduras':'#16A34A','Lácteos y Huevos':'#EA580C','Snacks y Dulces':'#D97706','Proteínas':'#DC2626','Conservas':'#0891B2','Salsas':'#7C3AED','Grasas':'#CA8A04','Porteína':'#DC2626'};
+var PMETA = {
+  dashboard:    ['Dashboard General','Vista consolidada de stock y ventas'],
+  trazabilidad: ['Trazabilidad de Stock','Todos los lotes en percha'],
+  cajas:        ['Cajas Sorpresa','Las mismas que ve el cliente en el portal'],
+  ofertas:      ['Ofertas Especiales','Solo bajada de precio · Proteínas urgentes'],
+  basket:       ['Análisis de Cesta (MBA)','Reglas de asociación de compra'],
+  ventas:       ['Ventas & Márgenes','Historial de ventas por tienda'],
+  ranking:      ['Top 20 Productos','Ranking por ganancia'],
+};
+
+// ── ESTADO (var para hoisting seguro) ────────────────────────────────────────
+var pymeActual = 'todas';
+var _nf = null;
+var _sf = null;
+
+// ── HELPERS DE DATOS ─────────────────────────────────────────────────────────
+function stockActual() {
+  if (pymeActual === 'todas') return DATA.stock;
+  var nombre = pymeActual === 'juanita' ? 'Mini Market Juanita' : 'Despensa Doña María';
+  return DATA.stock.filter(function(s){ return s.tienda === nombre; });
+}
+
+function mbActual() {
+  return MB_DATA[pymeActual] || MB_DATA.todas;
+}
+
+function ventasActual() {
+  return VENTAS_DATA[pymeActual] || VENTAS_DATA.todas;
+}
+
+function calcKPIs() {
+  var st = stockActual();
+  return {
+    valor_total:      st.reduce(function(a,x){ return a+x.valor; },0),
+    n_lotes:          st.length,
+    criticos:         st.filter(function(x){ return x.nivel==='CRITICO'; }).length,
+    en_alerta:        st.filter(function(x){ return x.nivel==='ALERTA'; }).length,
+    advertencia:      st.filter(function(x){ return x.nivel==='ADVERTENCIA'; }).length,
+    ok:               st.filter(function(x){ return x.nivel==='OK'; }).length,
+    valor_riesgo_7d:  st.filter(function(x){ return x.dias<=7&&x.dias>0; }).reduce(function(a,x){ return a+x.valor; },0),
+    valor_riesgo_30d: st.filter(function(x){ return x.dias<=30&&x.dias>0; }).reduce(function(a,x){ return a+x.valor; },0),
+    qty_riesgo_30d:   st.filter(function(x){ return x.dias<=30&&x.dias>0; }).reduce(function(a,x){ return a+x.qty; },0),
+  };
+}
+
+function getCajaImg(k) { return IMGS_CAJAS[k] || Object.values(IMGS_CAJAS)[0] || ''; }
+function el(id) { return document.getElementById(id); }
+function setHTML(id,v) { var e=el(id); if(e) e.innerHTML=v; }
+function fmt(n) { return (+n).toLocaleString('es-EC',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+function nbadge(n) {
+  var m = {VENCIDO:['nv','VENCIDO'],CRITICO:['nc','CRÍTICO'],ALERTA:['na','ALERTA'],ADVERTENCIA:['nad','PREV.'],OK:['nok','OK']};
+  var r = m[n] || ['nok','OK'];
+  return '<span class="nb '+r[0]+'">'+r[1]+'</span>';
+}
+
+function ubar(d) {
+  var p = d<=0?0:Math.min(100,(d/30)*100);
+  var c = d<=0?'#DC2626':d<=7?'#EA580C':d<=14?'#D97706':'#16A34A';
+  var l = d<=0?'Venc':d+'d';
+  return '<div class="ubar"><div class="utrk"><div class="ufil" style="width:'+p.toFixed(0)+'%;background:'+c+'"></div></div><span class="ulbl" style="color:'+c+'">'+l+'</span></div>';
+}
+
+function lchip(l,pct) {
+  var v = pct ? l+'%' : l;
+  var cl = +l>=1.8?'lh':+l>=1.3?'lm':'ll';
+  return '<span class="lift '+cl+'">'+v+'</span>';
+}
+
+function toast(msg) {
+  var t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+// ── NAVEGACIÓN ───────────────────────────────────────────────────────────────
+function goPage(id, btn) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.sb-btn').forEach(function(b){ b.classList.remove('on'); });
+  var pg = el('page-'+id);
+  if (pg) pg.classList.add('on');
+  if (btn instanceof HTMLElement) btn.classList.add('on');
+  var meta = PMETA[id] || [id,''];
+  el('ptitle').textContent = meta[0];
+  el('psub').textContent = meta[1];
+  if (id==='basket')      renderBasket();
+  if (id==='ventas')      renderVentas();
+  if (id==='ranking')     renderRanking();
+  if (id==='cajas')       renderCajas();
+  if (id==='ofertas')     renderOfertas();
+  if (id==='trazabilidad'){ _nf=null; fStock(null,null,true); }
+}
+
+// ── FILTRO PYME ──────────────────────────────────────────────────────────────
+function cambiarPyme(val, btn) {
+  pymeActual = val;
+  document.querySelectorAll('.pyme-btn').forEach(function(b){ b.classList.remove('pyme-on'); });
+  btn.classList.add('pyme-on');
+  renderKPIs();
+  renderDashboard();
+  var activa = (document.querySelector('.page.on')||{}).id || '';
+  activa = activa.replace('page-','');
+  if (activa==='trazabilidad') fStock(null,null,false);
+  if (activa==='basket')       renderBasket();
+  if (activa==='ventas')       renderVentas();
+  if (activa==='ranking')      renderRanking();
+  if (activa==='cajas')        renderCajas();
+  if (activa==='ofertas')      renderOfertas();
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────────────
+function renderKPIs() {
+  var sk = calcKPIs();
+  var vk = ventasActual().kpis;
+  setHTML('kv1','$'+fmt(sk.valor_total)); setHTML('ks1',sk.n_lotes+' lotes · '+sk.ok+' OK');
+  setHTML('kv2',sk.criticos);            setHTML('ks2','$'+fmt(sk.valor_riesgo_7d)+' en riesgo');
+  setHTML('kv3',sk.en_alerta);           setHTML('ks3',sk.advertencia+' advertencia');
+  setHTML('kv4','$'+fmt(vk.ventas_total)); setHTML('ks4',vk.n_pedidos.toLocaleString()+' pedidos');
+  setHTML('kv5',sk.qty_riesgo_30d.toLocaleString()); setHTML('ks5','$'+fmt(sk.valor_riesgo_30d)+' valor');
+  setHTML('nb-c',sk.criticos+sk.en_alerta); setHTML('nb-w',sk.advertencia);
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  var urg = stockActual().filter(function(x){ return x.nivel==='CRITICO'||x.nivel==='ALERTA'; })
+    .sort(function(a,b){ return a.dias-b.dias; }).slice(0,12);
+  setHTML('dash-alert', urg.length ? urg.map(function(x){
+    return '<tr onclick="mbaHint(\''+x.prod.replace(/'/g,"\\'")+'\')">'
+      +'<td style="font-weight:500">'+x.prod+'</td>'
+      +'<td style="font-size:.72rem;color:var(--mute)">'+x.tienda.split(' ').slice(-1)[0]+'</td>'
+      +'<td style="font-weight:600;color:'+(x.dias<=3?'var(--red)':x.dias<=7?'var(--orange)':'var(--amber)')+'">'+x.dias+'d</td>'
+      +'<td>'+nbadge(x.nivel)+'</td>'
+      +'<td style="min-width:95px">'+ubar(x.dias)+'</td></tr>';
+  }).join('') : '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--mute)">Sin alertas activas ✅</td></tr>');
+
+  var cv = {};
+  stockActual().forEach(function(x){ cv[x.cat]=(cv[x.cat]||0)+x.valor; });
+  var ca = Object.entries(cv).sort(function(a,b){ return b[1]-a[1]; });
+  var mv = ca.length ? ca[0][1] : 1;
+  setHTML('dash-cat', ca.map(function(e){
+    return '<div class="bcrow"><span class="bclbl">'+e[0]+'</span><div class="bctrk"><div class="bcfil" style="width:'+((e[1]/mv)*100).toFixed(0)+'%;background:'+(CC[e[0]]||'#64748B')+'">$'+(e[1]/1000).toFixed(1)+'K</div></div></div>';
+  }).join(''));
+
+  var mb = mbActual();
+  setHTML('dash-mb', mb.slice(0,10).map(function(r){
+    return '<tr><td style="font-weight:500">'+r.a+'</td><td style="font-weight:500">'+r.b+'</td>'
+      +'<td style="text-align:center">'+r.freq+'×</td>'
+      +'<td style="text-align:center">'+r.conf_ab+'%</td>'
+      +'<td>'+lchip(r.lift)+'</td></tr>';
+  }).join(''));
+}
+
+// ── INIT FILTROS ─────────────────────────────────────────────────────────────
+function initFiltros() {
+  var sel = el('fcat');
+  var cats = [];
+  DATA.stock.forEach(function(s){ if(cats.indexOf(s.cat)<0) cats.push(s.cat); });
+  cats.sort().forEach(function(c){ var o=document.createElement('option'); o.value=o.textContent=c; sel.appendChild(o); });
+  var ms = el('mbsel');
+  DATA.productos.forEach(function(p){ var o=document.createElement('option'); o.value=o.textContent=p; ms.appendChild(o); });
+}
+
+// ── TRAZABILIDAD ─────────────────────────────────────────────────────────────
+function fStock(nivel, btn, rst) {
+  if (nivel !== undefined) _nf = nivel;
+  if (btn) {
+    document.querySelectorAll('#page-trazabilidad .fbtn').forEach(function(b){ b.classList.remove('on'); });
+    btn.classList.add('on');
+  }
+  if (rst) {
+    el('ftienda').value=''; el('fcat').value=''; el('fbuscar').value='';
+  }
+  var ti = (el('ftienda')||{}).value||'';
+  var ca = (el('fcat')||{}).value||'';
+  var bq = ((el('fbuscar')||{}).value||'').toLowerCase();
+  var it = stockActual().slice();
+  if (_nf) it = it.filter(function(x){ return x.nivel===_nf; });
+  if (ti)  it = it.filter(function(x){ return x.tienda===ti; });
+  if (ca)  it = it.filter(function(x){ return x.cat===ca; });
+  if (bq)  it = it.filter(function(x){ return x.prod.toLowerCase().indexOf(bq)>=0||x.id.toLowerCase().indexOf(bq)>=0; });
+  it.sort(function(a,b){ return a.dias-b.dias; });
+  _sf = it;
+  setHTML('scnt', it.length+' lotes');
+  setHTML('stbl', it.length ? it.map(function(x){
+    return '<tr onclick="mbaHint(\''+x.prod.replace(/'/g,"\\'")+'\')">'
+      +'<td style="font-size:.68rem;color:var(--mute)">'+x.id+'</td>'
+      +'<td style="font-weight:500">'+x.prod+'</td>'
+      +'<td style="font-size:.72rem;color:var(--mute)">'+x.marca+'</td>'
+      +'<td style="font-size:.72rem">'+x.cat+'</td>'
+      +'<td style="font-size:.72rem;color:var(--mute)">'+x.tienda.split(' ').slice(-1)[0]+'</td>'
+      +'<td style="font-size:.68rem;color:var(--mute)">'+x.f_ing+'</td>'
+      +'<td style="font-size:.68rem;color:var(--mute)">'+x.f_cad+'</td>'
+      +'<td style="font-weight:600;color:'+(x.dias<=0?'var(--red)':x.dias<=7?'var(--orange)':x.dias<=14?'var(--amber)':'var(--ink)')+'">'+x.dias+'</td>'
+      +'<td style="min-width:100px">'+ubar(x.dias)+'</td>'
+      +'<td>'+x.qty+'</td>'
+      +'<td>$'+x.costo.toFixed(2)+'</td>'
+      +'<td style="font-weight:600">$'+x.valor.toFixed(2)+'</td>'
+      +'<td style="color:var(--orange)">'+(x.desc>0?'-'+x.desc+'%':'—')+'</td>'
+      +'<td style="color:var(--g500);font-weight:600">'+(x.desc>0?'$'+x.precio_r.toFixed(2):'—')+'</td>'
+      +'<td>'+nbadge(x.nivel)+'</td></tr>';
+  }).join('') : '<tr><td colspan="15" style="text-align:center;padding:2rem;color:var(--mute)">Sin resultados</td></tr>');
+}
+
+function mbaHint(prod) {
+  var mb = mbActual();
+  var sg = mb.filter(function(r){ return r.a===prod||r.b===prod; })
+    .map(function(r){ return {o:r.a===prod?r.b:r.a, l:r.lift}; })
+    .sort(function(a,b){ return b.l-a.l; }).slice(0,3);
+  if (!sg.length) { toast('Sin reglas MBA para '+prod); return; }
+  toast('También compran: '+sg.map(function(x){ return x.o+' (lift '+x.l+')'; }).join(' · '));
+}
+
+// ── CAJAS ────────────────────────────────────────────────────────────────────
+function renderCajas() {
+  var cajas = CAJAS_V2;
+  if (pymeActual !== 'todas') {
+    var tn = pymeActual==='juanita'?'Mini Market Juanita':'Despensa Doña María';
+    cajas = cajas.filter(function(c){ return c.tienda===tn; });
+  }
+  if (!cajas.length) { setHTML('cajas-pyme','<div class="empty">No hay cajas activas para esta tienda</div>'); return; }
+  var TIPO = {'solo':'1 persona','duo':'2 personas','familia':'3–5 personas'};
+  setHTML('cajas-pyme', cajas.map(function(c){
+    return '<div class="caja-pyme">'
+      +'<div class="caja-pyme-img"><img src="'+getCajaImg(c.img)+'" alt="'+c.nombre+'" loading="lazy">'
+      +'<div class="caja-pyme-ov"><div class="caja-pyme-chip">'+(TIPO[c.tipo]||c.tipo)+' · '+c.dias_min+'d</div><div class="caja-pyme-nom">'+c.nombre+'</div></div></div>'
+      +'<div class="caja-pyme-body">'
+      +c.prods.map(function(p){ return '<div class="cp-row"><span>'+p.prod+'<br><span style="font-size:.65rem;color:var(--mute);font-weight:400;text-transform:uppercase">'+p.marca+'</span></span><span>'+p.dias+'d · $'+p.precio_r.toFixed(2)+'</span></div>'; }).join('')
+      +'<div class="caja-pyme-foot"><div class="cpf-precio">$'+c.precio_r.toFixed(2)+'</div>'
+      +'<div><div style="text-decoration:line-through;color:var(--mute);font-size:.72rem;text-align:right">$'+c.precio_orig.toFixed(2)+'</div>'
+      +'<div class="cpf-desc">-'+c.desc+'%</div></div></div>'
+      +'<div style="font-size:.7rem;color:var(--mute);margin-top:.5rem">'+c.n_disponibles+' uds · '+c.tienda.split(' ').slice(-1)[0]+'</div>'
+      +'</div></div>';
+  }).join(''));
+}
+
+// ── OFERTAS ──────────────────────────────────────────────────────────────────
+function renderOfertas() {
+  var so = stockActual().filter(function(x){ return x.dias>0&&x.dias<=14&&(x.cat==='Proteínas'||x.cat==='Porteína'||x.subcat==='Carnes'||x.subcat==='Carne'); });
+  if (!so.length) { setHTML('ofertas-grid','<div class="empty">No hay productos en oferta especial actualmente</div>'); return; }
+  var pp = {};
+  so.forEach(function(x){ if(!pp[x.prod]){pp[x.prod]={...x,qt:0,vt:0};} pp[x.prod].qt+=x.qty; pp[x.prod].vt+=x.valor; });
+  setHTML('ofertas-grid', Object.values(pp).sort(function(a,b){ return a.dias-b.dias; }).map(function(p){
+    return '<div class="card" style="padding:1.1rem">'
+      +'<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:.75rem"><div>'
+      +'<div style="font-weight:600;font-size:.88rem">'+p.prod+'</div>'
+      +'<div style="font-size:.7rem;color:var(--mute);text-transform:uppercase;letter-spacing:.3px;margin-top:1px">'+p.marca+'</div>'
+      +'<div style="font-size:.7rem;color:var(--mute);margin-top:2px">'+p.subcat+' · '+p.tienda.split(' ').slice(-1)[0]+'</div>'
+      +'</div>'+nbadge(p.nivel)+'</div>'
+      +'<div style="margin-bottom:.75rem">'+ubar(p.dias)+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.78rem">'
+      +'<div style="background:var(--bg);border-radius:6px;padding:.4rem .6rem"><div style="color:var(--mute);font-size:.65rem">Stock</div><div style="font-weight:600">'+p.qt+' uds</div></div>'
+      +'<div style="background:var(--red-l);border-radius:6px;padding:.4rem .6rem"><div style="color:var(--red);font-size:.65rem">Valor en riesgo</div><div style="font-weight:600;color:var(--red)">$'+p.vt.toFixed(2)+'</div></div>'
+      +'<div style="background:var(--bg);border-radius:6px;padding:.4rem .6rem"><div style="color:var(--mute);font-size:.65rem">Precio actual</div><div style="font-weight:600">$'+p.costo.toFixed(2)+'</div></div>'
+      +'<div style="background:var(--g50);border-radius:6px;padding:.4rem .6rem"><div style="color:var(--g600);font-size:.65rem">Precio oferta</div><div style="font-weight:700;color:var(--g600)">$'+p.precio_r.toFixed(2)+' <span style="font-size:.62rem">(-'+p.desc+'%)</span></div></div>'
+      +'</div>'
+      +'<div style="background:var(--orange-l);border-radius:7px;padding:.5rem .75rem;font-size:.72rem;color:var(--orange);font-weight:500;margin-top:.75rem">Solo rebaja de precio · No combinar en caja sorpresa</div>'
+      +'</div>';
+  }).join(''));
+}
+
+// ── BASKET ───────────────────────────────────────────────────────────────────
+function renderBasket() {
+  var mb = mbActual();
+  var q = (el('mbsearch')||{}).value||'';
+  q = q.toLowerCase();
+  var r = q ? mb.filter(function(x){ return x.a.toLowerCase().indexOf(q)>=0||x.b.toLowerCase().indexOf(q)>=0; }) : mb;
+  var lbl = pymeActual==='juanita'?'Mini Market Juanita':pymeActual==='maria'?'Despensa Doña María':'Ambas tiendas';
+  setHTML('mbcnt', r.length+' reglas · '+lbl);
+  setHTML('mbtbl', r.length ? r.map(function(x){
+    return '<tr><td style="font-weight:500">'+x.a+'</td><td style="font-weight:500">'+x.b+'</td>'
+      +'<td style="text-align:center">'+x.freq+'×</td>'
+      +'<td style="text-align:center">'+x.conf_ab+'%</td>'
+      +'<td style="text-align:center">'+x.conf_ba+'%</td>'
+      +'<td>'+lchip(x.lift)+'</td></tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--mute)">Sin resultados</td></tr>');
+}
+
+function buscarSugs() {
+  var p = el('mbsel').value; if(!p) return;
+  var mb = mbActual();
+  var sg = mb.filter(function(r){ return r.a===p||r.b===p; }).map(function(r){
+    return {o:r.a===p?r.b:r.a, cf:r.a===p?r.conf_ab:r.conf_ba, l:r.lift, f:r.freq};
+  }).sort(function(a,b){ return b.l-a.l; }).slice(0,7);
+  var d = el('mbsug');
+  if (!sg.length) { d.innerHTML='<div class="empty">Sin datos suficientes</div>'; return; }
+  d.innerHTML = '<p style="font-size:.74rem;color:var(--mute);padding:.75rem 0 .5rem">Clientes que compran <strong>'+p+'</strong> también compran:</p>'
+    + sg.map(function(x,i){
+      return '<div class="sug"><span style="font-weight:700;color:var(--mute);width:18px">'+(i+1)+'</span>'
+        +'<div style="flex:1"><div style="font-weight:500;font-size:.82rem">'+x.o+'</div>'
+        +'<div style="font-size:.7rem;color:var(--mute)">'+x.f+'× · '+x.cf+'% confianza</div></div>'
+        +lchip(x.l)+'</div>';
+    }).join('');
+}
+
+// ── VENTAS ───────────────────────────────────────────────────────────────────
+function renderVentas() {
+  var vd = ventasActual();
+  var lbl = pymeActual==='juanita'?'Mini Market Juanita':pymeActual==='maria'?'Despensa Doña María':'Ambas tiendas';
+  setHTML('v-sub', lbl);
+  var c = vd.ventas_cat;
+  var mv = Math.max.apply(null, c.map(function(x){ return x.ventas; })) || 1;
+  var mm = Math.max.apply(null, c.map(function(x){ return x.ventas>0?(x.ganancia/x.ventas*100):0; })) || 1;
+  function catKey(x){ return x.Categoría||x.cat||x.categoria||''; }
+  setHTML('v-cat', c.map(function(x){
+    return '<div class="bcrow"><span class="bclbl">'+catKey(x)+'</span><div class="bctrk"><div class="bcfil" style="width:'+((x.ventas/mv)*100).toFixed(0)+'%;background:'+(CC[catKey(x)]||'#64748B')+'">$'+(x.ventas/1000).toFixed(1)+'K</div></div><span class="bcval">$'+x.ventas.toLocaleString('es-EC',{maximumFractionDigits:0})+'</span></div>';
+  }).join(''));
+  setHTML('v-mgn', c.map(function(x){
+    var m = x.ventas>0?(x.ganancia/x.ventas*100):0;
+    return '<div class="bcrow"><span class="bclbl">'+catKey(x)+'</span><div class="bctrk"><div class="bcfil" style="width:'+(mm>0?(m/mm*100):0).toFixed(0)+'%;background:'+(CC[catKey(x)]||'#64748B')+'">'+m.toFixed(1)+'%</div></div><span class="bcval">'+m.toFixed(1)+'%</span></div>';
+  }).join(''));
+  var t = (vd.tendencia||[]).slice(-20);
+  var mt = Math.max.apply(null, t.map(function(x){ return x.ventas; })) || 1;
+  setHTML('v-trend', t.map(function(x){
+    return '<div class="bcrow"><span class="bclbl" style="width:68px">'+x.mes+'</span><div class="bctrk"><div class="bcfil" style="width:'+((x.ventas/mt)*100).toFixed(0)+'%;background:#2563EB">$'+x.ventas.toFixed(0)+'</div></div><span class="bcval">$'+x.ventas.toLocaleString('es-EC',{maximumFractionDigits:0})+'</span></div>';
+  }).join(''));
+}
+
+// ── RANKING ──────────────────────────────────────────────────────────────────
+function renderRanking() {
+  var vd = ventasActual();
+  var lbl = pymeActual==='juanita'?'Mini Market Juanita':pymeActual==='maria'?'Despensa Doña María':'Ambas tiendas';
+  setHTML('r-sub', lbl);
+  setHTML('rtbl', (vd.top_prods||[]).map(function(p,i){
+    var pn = p.Producto||p.prod||p.producto||'';
+    var marca = p.marca||p.Marca||'';
+    var ga = +(p.ganancia||0), ve = +(p.ventas||0), qt = +(p.qty||0);
+    var m = ve>0?((ga/ve)*100).toFixed(1):0;
+    return '<tr><td style="color:var(--mute);font-weight:600">'+(i+1)+'</td>'
+      +'<td style="font-weight:500">'+pn+'</td>'
+      +'<td style="font-size:.72rem;color:var(--mute);text-transform:uppercase;letter-spacing:.3px">'+marca+'</td>'
+      +'<td style="color:var(--g500);font-weight:600">$'+ga.toFixed(2)+'</td>'
+      +'<td>$'+ve.toFixed(2)+'</td>'
+      +'<td>'+qt.toLocaleString()+'</td>'
+      +'<td>'+lchip(m,true)+'</td></tr>';
+  }).join(''));
+}
+
+// ── EXPORT ───────────────────────────────────────────────────────────────────
+function exportCSV() {
+  var it = _sf || DATA.stock;
+  var hdr = ['ID Lote','Producto','Marca','Categoría','Subcategoría','Tienda','F.Ingreso','F.Caducidad','Días','Nivel','Qty','Costo','Valor','Desc%','Precio RESCAT'];
+  var rows = it.map(function(x){ return [x.id,x.prod,x.marca,x.cat,x.subcat,x.tienda,x.f_ing,x.f_cad,x.dias,x.nivel,x.qty,x.costo,x.valor,x.desc,x.precio_r]; });
+  var csv = [hdr].concat(rows).map(function(r){ return r.join(','); }).join('\n');
+  var b = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download='rescat_stock.csv'; a.click();
+  toast('CSV exportado ('+it.length+' registros)');
+}
+
+// ── ARRANQUE ─────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  initFiltros();
+  renderKPIs();
+  renderDashboard();
+});
+</script>
+</body>
+</html>
