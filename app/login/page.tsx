@@ -7,10 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
+function safeNext(next: string | null): string {
+  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/"
+}
+
 function LoginForm() {
   const supabase = createBrowserClient()
   const router = useRouter()
-  const next = useSearchParams().get("next") ?? "/"
+  const next = safeNext(useSearchParams().get("next"))
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 

@@ -8,6 +8,7 @@ export async function confirmPickup(reservationId: string) {
   const { error } = await supabase.from("reservation")
     .update({ status: "pickedUp", pickedUpAt: new Date().toISOString() })
     .eq("id", reservationId)
+    .in("status", ["reserved", "paid"])
   if (error) throw new Error(error.message)
   revalidatePath("/merchant/reservations")
 }

@@ -42,4 +42,19 @@ describe("RLS", () => {
     const { error } = await c.from("review").insert({ reservationId: victimBoxId, storeId: victimBoxId, customerId: uid, rating: 5, comment: "x" })
     expect(error).not.toBeNull()
   })
+
+  it("a customer cannot escalate their own profile role", async () => {
+    const c = await signedIn("cliente@rescat.ec", "rescat123")
+    const uid = (await c.auth.getUser()).data.user!.id
+    await c.from("profile").update({ role: "merchant" }).eq("id", uid)
+    const { data } = await admin.from("profile").select("role").eq("id", uid).single()
+    expect(data!.role).toBe("customer")
+  })
+
+  it("a customer cannot insert a store for themselves", async () => {
+    const c = await signedIn("cliente@rescat.ec", "rescat123")
+    const uid = (await c.auth.getUser()).data.user!.id
+    const { data, error } = await c.from("store").insert({ ownerId: uid, name: "X", address: "y", lat: -2.1, lng: -79.9 }).select()
+    expect(error !== null || (data?.length ?? 0) === 0).toBe(true)
+  })
 })

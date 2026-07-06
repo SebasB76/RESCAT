@@ -10,16 +10,20 @@ export type BoxInput = {
 }
 
 export async function createBox(input: BoxInput) {
+  if (input.originalPrice <= 0 || input.price < 0 || input.price > input.originalPrice) throw new Error("invalid_price")
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: store } = await supabase.from("store").select("id").eq("ownerId", user!.id).limit(1).single()
-  const { error } = await supabase.from("box").insert({ ...input, storeId: store!.id, status: "active" })
+  const { data: stores } = await supabase.from("store").select("id").eq("ownerId", user!.id).order("createdAt", { ascending: true }).limit(1)
+  if (!stores?.length) throw new Error("no_store")
+  const storeId = stores[0].id
+  const { error } = await supabase.from("box").insert({ ...input, storeId, status: "active" })
   if (error) throw new Error(error.message)
   revalidatePath("/merchant")
   redirect("/merchant")
 }
 
 export async function updateBox(id: string, input: BoxInput) {
+  if (input.originalPrice <= 0 || input.price < 0 || input.price > input.originalPrice) throw new Error("invalid_price")
   const supabase = await createServerClient()
   const { error } = await supabase.from("box").update(input).eq("id", id)
   if (error) throw new Error(error.message)
