@@ -31,7 +31,7 @@ function LoginForm() {
 
   return (
     <main className="mx-auto max-w-sm px-6 py-16">
-      <h1 className="font-display text-2xl text-pino">Entrar a RESCAT</h1>
+      <h1 className="font-display text-3xl sm:text-4xl text-pino">Entrar a RESCAT</h1>
       <Button onClick={google} className="mt-6 w-full bg-pino">Continuar con Google</Button>
       <div className="my-4 text-center text-sm text-hoja">o con tu correo</div>
       <form onSubmit={emailLogin} className="space-y-3">

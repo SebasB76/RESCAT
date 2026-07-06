@@ -28,7 +28,7 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto max-w-sm px-6 py-16">
-      <h1 className="font-display text-2xl text-pino">Crear cuenta</h1>
+      <h1 className="font-display text-3xl sm:text-4xl text-pino">Crear cuenta</h1>
       <Button onClick={google} className="mt-6 w-full bg-pino">Continuar con Google</Button>
       <form onSubmit={submit} className="mt-4 space-y-3">
         <div><Label>Nombre</Label><Input value={fullName} onChange={(e) => setFullName(e.target.value)} required /></div>

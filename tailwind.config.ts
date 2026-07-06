@@ -7,7 +7,7 @@ const config: Config = {
       colors: {
         cream: "#F6EFDD",
         pino: "#123B29",
-        hoja: "#5E8A31",
+        hoja: "#4C7028",
         dorado: "#E5A11C",
         terracota: "#CE5228",
       },

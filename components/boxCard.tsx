@@ -56,14 +56,14 @@ export function BoxCard({ box }: { box: DiscoveryBox }) {
         ) : (
           <div className="flex h-full w-full items-center justify-center text-pino/20"><ShoppingBasketIcon className="size-10" /></div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-pino/80 via-pino/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-pino/95 via-pino/40 to-transparent" />
         <RescueBadge className="absolute top-2.5 left-2.5 shadow-sm" />
         {off > 0 && (
           <span className="absolute top-2.5 right-2.5 rounded-full bg-terracota px-2 py-0.5 text-xs font-bold text-white shadow-sm">-{off}%</span>
         )}
         <div className="absolute right-3 bottom-2.5 left-3">
           <h3 className="font-display text-lg leading-tight text-white drop-shadow">{box.title}</h3>
-          <p className="text-xs text-white/80">{TIPO_LABEL[box.tipo]}</p>
+          <p className="text-xs text-white/90 drop-shadow">{TIPO_LABEL[box.tipo]}</p>
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3">
