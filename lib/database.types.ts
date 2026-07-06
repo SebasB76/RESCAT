@@ -256,7 +256,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reserve_box: {
+        Args: {
+          p_box_id: string
+          p_customer_id: string
+          p_payment_method: Database["public"]["Enums"]["payment_method"]
+        }
+        Returns: Database["public"]["Tables"]["reservation"]["Row"]
+      }
+      expire_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      list_boxes_near: {
+        Args: {
+          p_lat: number
+          p_lng: number
+        }
+        Returns: {
+          id: string
+          storeId: string
+          title: string
+          price: number
+          originalPrice: number
+          stockQty: number
+          photoUrl: string | null
+          bestBefore: string | null
+          pickupEnd: string
+          storeName: string
+          neighborhood: string | null
+          lat: number
+          lng: number
+          distanceKm: number
+          storeRating: number
+        }[]
+      }
     }
     Enums: {
       box_status: "active" | "soldOut" | "expired"
