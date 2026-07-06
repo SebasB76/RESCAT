@@ -62,10 +62,30 @@ async function main() {
     check(`clear ${t}`, (await admin.from(t).delete().neq("id", ZERO)).error)
   }
 
+  const JUANITA_ONLY = new Set([
+    "Gaseosa Sabor Naranja 2L", "Jugo de Naranja 1L", "Barra de Chocolate con Leche",
+    "Galletas de Chocolate", "Papas Fritas Clásicas", "Chifles Salados", "Pan Integral",
+    "Salsa de Soya 150ml", "Mermelada de Frutimora 285g", "Sal Yodada 1kg",
+    "Fideos Tallarín 400g", "Harina de Trigo 1kg", "Mantequilla con Sal 250g",
+    "Salchichas de Pollo", "Mortadela 500 g", "Salami Italiano 150g",
+  ])
+  const MARIA_ONLY = new Set([
+    "Carne de Res Molida 500g", "Pechuga de Pollo sin Piel 1kg", "Chuleta de Cerdo 500g",
+    "Champiñones Tajados 400g", "Tomate Riñón 1kg", "Cebolla Paiteña 1kg", "Papas Chola 2kg",
+    "Plátano Verde x5", "Limón Sutil 1kg", "Queso Fresco 500g", "Queso Mozzarella 500g",
+    "Leche Descremada 1L", "Frejol Rojo bajo en sal 425g", "Lentejas 425g",
+    "Maíz Dulce en Lata", "Sardinas en Salsa de Tomate",
+  ])
+  const allowedStore = (storeId: string, name: string) =>
+    !(storeId === jua && MARIA_ONLY.has(name)) && !(storeId === mar && JUANITA_ONLY.has(name))
+  const isShared = (name: string) => !JUANITA_ONLY.has(name) && !MARIA_ONLY.has(name)
+
   const prodMap = new Map<string, any>()
   const addProd = (storeId: string, p: any) => {
+    if (!allowedStore(storeId, p.name)) return
     const key = `${storeId}|${p.name}`
-    if (!prodMap.has(key)) prodMap.set(key, { storeId, name: p.name, brand: p.brand, category: p.category, subcategory: p.subcategory, cost: p.cost, price: p.price })
+    const price = storeId === jua && isShared(p.name) ? round2(p.price * 1.05) : p.price
+    if (!prodMap.has(key)) prodMap.set(key, { storeId, name: p.name, brand: p.brand, category: p.category, subcategory: p.subcategory, cost: p.cost, price })
   }
   for (const c of CATALOGO) {
     const base = { name: c.prod, brand: c.marca, category: c.cat, subcategory: c.subcat, cost: c.costo, price: c.precio_venta }

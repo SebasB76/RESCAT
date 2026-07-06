@@ -15,19 +15,23 @@ export type CatalogProduct = {
   storeName: string
 }
 
-export function ProductCard({ product }: { product: CatalogProduct }) {
+export function ProductCard({ product, variants }: { product: CatalogProduct; variants?: CatalogProduct[] }) {
   const { addItem } = useCart()
+  const all = variants && variants.length > 0 ? variants : [product]
+  const cheapest = all.reduce((a, b) => (b.price < a.price ? b : a))
+  const multiStore = all.length > 1
+  const others = all.length - 1
 
   function add() {
     addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      photoUrl: product.photoUrl,
-      storeId: product.storeId,
-      storeName: product.storeName,
+      productId: cheapest.id,
+      name: cheapest.name,
+      price: cheapest.price,
+      photoUrl: cheapest.photoUrl,
+      storeId: cheapest.storeId,
+      storeName: cheapest.storeName,
     })
-    toast.success(`${product.name} agregado`)
+    toast.success(`${cheapest.name} agregado`)
   }
 
   return (
@@ -46,8 +50,12 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
           {product.brand && product.subcategory ? " · " : ""}
           {product.subcategory}
         </p>
-        <p className="mt-1 font-display text-lg text-pino">${product.price.toFixed(2)}</p>
-        <p className="text-[0.68rem] text-pino/50">{product.storeName}</p>
+        <p className="mt-1 font-display text-lg text-pino">
+          {multiStore && <span className="font-sans text-xs text-pino/50">desde </span>}${cheapest.price.toFixed(2)}
+        </p>
+        <p className="text-[0.68rem] text-pino/50">
+          {multiStore ? `${cheapest.storeName} · +${others} ${others === 1 ? "tienda" : "tiendas"}` : product.storeName}
+        </p>
         <Button
           onClick={add}
           variant="outline"

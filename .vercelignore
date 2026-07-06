@@ -1,0 +1,11 @@
+legacy
+docs
+tests
+test-results
+.gstack
+.impeccable
+.playwright-cli
+.superpowers
+.claude
+playwright.config.ts
+vitest.config.ts

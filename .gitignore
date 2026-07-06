@@ -31,3 +31,6 @@ playwright-report/
 blob-report/
 playwright/.cache/
 .playwright-cli/
+
+# gstack tooling
+.gstack/

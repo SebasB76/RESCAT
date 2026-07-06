@@ -25,6 +25,17 @@ export function CatalogBrowser({ products }: { products: CatalogProduct[] }) {
     })
   }, [products, query, category])
 
+  const groups = useMemo(() => {
+    const map = new Map<string, CatalogProduct[]>()
+    for (const p of filtered) {
+      const key = `${p.name}|${p.brand ?? ""}`
+      const arr = map.get(key)
+      if (arr) arr.push(p)
+      else map.set(key, [p])
+    }
+    return Array.from(map.entries())
+  }, [filtered])
+
   return (
     <div>
       <Input
@@ -48,12 +59,12 @@ export function CatalogBrowser({ products }: { products: CatalogProduct[] }) {
           </button>
         ))}
       </div>
-      {filtered.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="py-16 text-center text-hoja">No hay productos que coincidan.</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} />
+          {groups.map(([key, variants]) => (
+            <ProductCard key={key} product={variants[0]} variants={variants} />
           ))}
         </div>
       )}

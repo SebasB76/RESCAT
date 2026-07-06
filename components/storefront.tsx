@@ -12,6 +12,7 @@ import { SignOutButton } from "@/components/signOutButton"
 import { CartProvider } from "@/components/cartProvider"
 import { Cart } from "@/components/cart"
 import { BoxModal } from "@/components/boxModal"
+import { CategoryFilter } from "@/components/categoryFilter"
 import { Input } from "@/components/ui/input"
 
 const DiscoveryMap = dynamic(() => import("@/components/discoveryMap"), { ssr: false })
@@ -97,6 +98,17 @@ export function Storefront() {
     })
   }, [products, storeId, category, q])
 
+  const productGroups = useMemo(() => {
+    const map = new Map<string, CatalogProduct[]>()
+    for (const p of filteredProducts) {
+      const key = `${p.name}|${p.brand ?? ""}`
+      const arr = map.get(key)
+      if (arr) arr.push(p)
+      else map.set(key, [p])
+    }
+    return Array.from(map.entries())
+  }, [filteredProducts])
+
   const avgSavingsPct = useMemo(() => {
     if (!boxes.length) return null
     const sum = boxes.reduce((acc, b) => acc + (b.originalPrice > 0 ? 1 - b.price / b.originalPrice : 0), 0)
@@ -108,7 +120,9 @@ export function Storefront() {
       <div className="min-h-dvh bg-cream">
         <header className="sticky top-0 z-30 border-b border-pino/10 bg-cream/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-            <Link href="/" className="font-display text-2xl font-semibold text-pino">RES<span className="text-hoja">CAT</span></Link>
+            <Link href="/" className="flex items-center" aria-label="RESCAT">
+              <img src="/logo.png" alt="RESCAT" className="h-8 w-auto" />
+            </Link>
             <nav className="flex items-center gap-4 text-sm">
               <a href="#catalogo" className="hidden text-pino hover:text-hoja sm:inline">Catálogo</a>
               {signedIn ? (
@@ -167,18 +181,16 @@ export function Storefront() {
           <section id="catalogo" className="mt-12 scroll-mt-20 border-t border-pino/10 pt-10">
             <div className="mb-4">
               <h2 className="font-display text-xl text-pino">Catálogo de abarrotes</h2>
-              <p className="text-sm text-hoja">Compra productos individuales y retíralos en la tienda.</p>
+              <p className="text-sm text-pino/70">Compra productos individuales y retíralos en la tienda.</p>
             </div>
-            <div className="mb-5 flex flex-wrap gap-2">
-              {categories.map((c) => (
-                <button key={c} onClick={() => setCategory(c)} className={`rounded-full border px-3 py-1 text-sm transition ${category === c ? "border-pino bg-pino text-cream" : "border-pino/20 text-pino/70 hover:border-hoja hover:text-hoja"}`}>{c}</button>
-              ))}
+            <div className="mb-6">
+              <CategoryFilter categories={categories} value={category} onChange={setCategory} />
             </div>
-            {filteredProducts.length === 0 ? (
+            {productGroups.length === 0 ? (
               <p className="py-12 text-center text-hoja">No hay productos que coincidan.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {filteredProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+                {productGroups.map(([key, variants]) => <ProductCard key={key} product={variants[0]} variants={variants} />)}
               </div>
             )}
           </section>
