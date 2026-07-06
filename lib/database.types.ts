@@ -621,6 +621,7 @@ export type Database = {
           photoUrl: string | null
           bestBefore: string | null
           pickupEnd: string
+          pickupStart: string
           tipo: Database["public"]["Enums"]["box_tipo"]
           items: string[]
           storeName: string

@@ -2,13 +2,18 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { BanknoteIcon, CheckIcon, CreditCardIcon, XIcon } from "lucide-react"
+import { BanknoteIcon, CheckIcon, CreditCardIcon, ShoppingBasketIcon, XIcon } from "lucide-react"
 import { reserveBox } from "@/actions/reservations"
 import { processPayment, type PaymentMethod } from "@/lib/payment"
 import { UrgencyChip } from "@/components/urgencyChip"
+import { RescueBadge } from "@/components/rescueBadge"
+import { ScarcityBadge } from "@/components/scarcityBadge"
+import { PickupWindow } from "@/components/pickupWindow"
+import { ProvenanceChip } from "@/components/provenanceChip"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { money } from "@/lib/format"
+import { foodKgSaved, co2KgSaved, type BoxTipo } from "@/lib/impact"
 
 export type ReserveBox = {
   id: string
@@ -19,10 +24,13 @@ export type ReserveBox = {
   originalPrice: number
   photoUrl: string | null
   bestBefore: string | null
+  pickupStart: string | null
+  pickupEnd: string | null
   storeName: string
   neighborhood: string | null
   stockQty: number
   status: string
+  tipo: BoxTipo
 }
 
 export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => void }) {
@@ -31,6 +39,7 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
   const [busy, setBusy] = useState(false)
   const [code, setCode] = useState<string | null>(null)
   const off = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
+  const saved = Math.max(0, box.originalPrice - box.price)
   const soldOut = box.status !== "active" || box.stockQty < 1
 
   async function confirm() {
@@ -59,8 +68,13 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
       <div className="relative h-48 bg-cream">
-        {box.photoUrl && <img src={box.photoUrl} alt={box.title} className="h-full w-full object-cover" />}
+        {box.photoUrl ? (
+          <img src={box.photoUrl} alt={box.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-pino/20"><ShoppingBasketIcon className="size-14" /></div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-pino/80 to-transparent" />
+        <RescueBadge className="absolute top-3 left-3 shadow-sm" />
         {onClose && (
           <button
             onClick={onClose}
@@ -69,9 +83,6 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
           >
             <XIcon className="size-4" />
           </button>
-        )}
-        {off > 0 && (
-          <span className="absolute top-3 left-3 rounded-full bg-terracota px-2 py-0.5 text-xs font-bold text-white">-{off}%</span>
         )}
         <h2 className="absolute right-4 bottom-3 left-4 font-display text-2xl text-white drop-shadow">{box.title}</h2>
       </div>
@@ -91,8 +102,10 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
         </div>
       ) : (
         <div className="space-y-4 p-5">
-          <div className="flex items-center justify-between gap-2 text-sm">
-            <span className="text-hoja">{box.storeName}{box.neighborhood ? ` · ${box.neighborhood}` : ""}</span>
+          <ProvenanceChip storeName={box.storeName} />
+          <div className="flex flex-wrap gap-2">
+            <PickupWindow start={box.pickupStart} end={box.pickupEnd} />
+            <ScarcityBadge stock={box.stockQty} />
             <UrgencyChip bestBefore={box.bestBefore} />
           </div>
           {box.description && <p className="text-sm text-pino/80">{box.description}</p>}
@@ -112,9 +125,14 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
             <div>
               <p className="text-xs text-pino/50">Precio rescate</p>
               <p className="font-display text-2xl text-pino tabular-nums">{money(box.price)}</p>
+              {saved > 0 && <p className="text-sm font-semibold text-hoja">Ahorras {money(saved)}</p>}
             </div>
-            <p className="text-sm text-pino/40 line-through tabular-nums">{money(box.originalPrice)}</p>
+            <div className="text-right">
+              <p className="text-sm text-pino/40 line-through tabular-nums">{money(box.originalPrice)}</p>
+              {off > 0 && <span className="mt-1 inline-block rounded-full bg-terracota/15 px-2 py-0.5 text-xs font-bold text-terracota">-{off}%</span>}
+            </div>
           </div>
+          <p className="text-xs text-hoja">Al rescatar esta caja salvas ~{foodKgSaved(box.tipo)} kg de comida y evitas {co2KgSaved(box.tipo)} kg de CO₂ (estimado).</p>
 
           {soldOut ? (
             <p className="rounded-lg bg-terracota/10 py-3 text-center text-sm font-semibold text-terracota">Agotado por ahora</p>

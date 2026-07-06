@@ -18,7 +18,7 @@ export function BoxModal({ id }: { id: string }) {
     let active = true
     supabase
       .from("box")
-      .select("id,title,description,items,price,originalPrice,photoUrl,bestBefore,stockQty,status,store(name,neighborhood)")
+      .select("id,title,description,items,price,originalPrice,photoUrl,bestBefore,pickupStart,pickupEnd,stockQty,status,tipo,store(name,neighborhood)")
       .eq("id", id)
       .single()
       .then(({ data }) => {
@@ -37,6 +37,9 @@ export function BoxModal({ id }: { id: string }) {
           originalPrice: data.originalPrice,
           photoUrl: data.photoUrl,
           bestBefore: data.bestBefore,
+          pickupStart: data.pickupStart,
+          pickupEnd: data.pickupEnd,
+          tipo: data.tipo,
           storeName: store?.name ?? "",
           neighborhood: store?.neighborhood ?? null,
           stockQty: data.stockQty,
