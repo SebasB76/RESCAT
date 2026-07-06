@@ -28,11 +28,12 @@ async function main() {
   ]
   const { data: insertedStores } = await admin.from("store").upsert(stores).select()
 
+  const photoBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/box-photos/seed`
   const boxesByStore = (storeId: string) => [
-    { storeId, title: "Caja Desayuno", description: "Pan, leche y galletas del día", items: ["Pan de Molde Blanco (Supan)", "Leche Entera 1L (Toni)", "Galletas de Chocolate (Oreo)"], category: "Desayuno", originalPrice: 5.02, price: 2.25, stockQty: 6, bestBefore: dateInDays(3), pickupStart: inDays(0), pickupEnd: inDays(1) },
-    { storeId, title: "Panadería del día", description: "Panes surtidos horneados hoy", items: ["Pan Integral (Bimbo)", "Pan de Molde Blanco (Supan)"], category: "Panadería", originalPrice: 3.76, price: 1.90, stockQty: 4, bestBefore: dateInDays(2), pickupStart: inDays(0), pickupEnd: inDays(1) },
-    { storeId, title: "Frutas & Verduras", description: "Frescos por consumir pronto", items: ["Tomate Riñón 1kg", "Cebolla Paiteña 1kg", "Plátano Verde x5"], category: "Frutas y Verduras", originalPrice: 3.10, price: 1.40, stockQty: 5, bestBefore: dateInDays(4), pickupStart: inDays(0), pickupEnd: inDays(1) },
-    { storeId, title: "Lácteos por vencer", description: "Lácteos frescos a precio rescate", items: ["Leche Descremada 1L (Reyleche)", "Queso Fresco 500g (Kiosko)", "Media Cubeta de Huevos x15 (Indaves)"], category: "Lácteos y Huevos", originalPrice: 9.13, price: 4.55, stockQty: 3, bestBefore: dateInDays(5), pickupStart: inDays(0), pickupEnd: inDays(2) },
+    { storeId, title: "Caja Desayuno", description: "Pan, leche y galletas del día", items: ["Pan de Molde Blanco (Supan)", "Leche Entera 1L (Toni)", "Galletas de Chocolate (Oreo)"], category: "Desayuno", originalPrice: 5.02, price: 2.25, stockQty: 6, bestBefore: dateInDays(3), pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: `${photoBase}/desayuno.jpg` },
+    { storeId, title: "Panadería del día", description: "Panes surtidos horneados hoy", items: ["Pan Integral (Bimbo)", "Pan de Molde Blanco (Supan)"], category: "Panadería", originalPrice: 3.76, price: 1.90, stockQty: 4, bestBefore: dateInDays(2), pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: `${photoBase}/desayuno.jpg` },
+    { storeId, title: "Frutas & Verduras", description: "Frescos por consumir pronto", items: ["Tomate Riñón 1kg", "Cebolla Paiteña 1kg", "Plátano Verde x5"], category: "Frutas y Verduras", originalPrice: 3.10, price: 1.40, stockQty: 5, bestBefore: dateInDays(4), pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: `${photoBase}/verduras.jpg` },
+    { storeId, title: "Lácteos por vencer", description: "Lácteos frescos a precio rescate", items: ["Leche Descremada 1L (Reyleche)", "Queso Fresco 500g (Kiosko)", "Media Cubeta de Huevos x15 (Indaves)"], category: "Lácteos y Huevos", originalPrice: 9.13, price: 4.55, stockQty: 3, bestBefore: dateInDays(5), pickupStart: inDays(0), pickupEnd: inDays(2), photoUrl: `${photoBase}/lacteos.jpg` },
   ]
   const allBoxes = insertedStores!.flatMap((s) => boxesByStore(s.id))
   const { data: insertedBoxes } = await admin.from("box").insert(allBoxes).select()
