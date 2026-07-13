@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js"
 import { config } from "dotenv"
+import { imageSlugFor, boxImageSlug, photoUrlFor } from "./catalogImages"
 config({ path: ".env.local" })
 
-const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const base = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const admin = createClient(base, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const ZERO = "00000000-0000-0000-0000-000000000000"
 const round2 = (n: number) => Math.round(n * 100) / 100
 
@@ -95,7 +97,10 @@ async function main() {
   check("clear product", (await admin.from("product").delete().neq("id", ZERO)).error)
 
   const productRows = stores.flatMap((s) =>
-    CATALOG.map((p) => ({ storeId: s.id, name: p.name, brand: p.brand, category: p.category, cost: round2(p.price * 0.8), price: p.price }))
+    CATALOG.map((p) => {
+      const slug = imageSlugFor(p.name)
+      return { storeId: s.id, name: p.name, brand: p.brand, category: p.category, cost: round2(p.price * 0.8), price: p.price, photoUrl: slug ? photoUrlFor(base, slug) : null }
+    })
   )
   const { data: products, error: pErr } = await admin.from("product").insert(productRows).select("id,storeId,name")
   check("insert products", pErr)
@@ -118,10 +123,11 @@ async function main() {
     for (const b of BOXES) {
       const orig = round2(b.items.reduce((sum, n) => sum + (priceByName.get(n) ?? 0), 0))
       const price = round2(orig * 0.5)
+      const boxSlug = boxImageSlug(b.title)
       const { data: box, error: bErr } = await admin.from("box").insert({
         storeId: s.id, title: b.title, description: b.description, items: b.items, category: b.category,
         originalPrice: orig, price, stockQty: b.stock, bestBefore: dateInDays(b.bestBeforeDays),
-        pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: null, status: "active", tipo: b.tipo,
+        pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: boxSlug ? photoUrlFor(base, boxSlug) : null, status: "active", tipo: b.tipo,
       }).select("id").single()
       check(`insert box ${b.title} @ ${s.name}`, bErr)
       boxCount++
