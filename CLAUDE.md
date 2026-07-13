@@ -19,17 +19,19 @@ Next.js 16 (App Router, TypeScript) · Tailwind v4 (CSS-first; bridged to `tailw
 
 - Reads via **Server Components**; mutations via **Server Actions** in `actions/`.
 - **Reservations are created ONLY via the `reserve_box` Postgres RPC** (atomic `FOR UPDATE` stock decrement + `auth.uid() = p_customer_id` identity guard + pickup-window check). Never insert into `reservation` directly — there is no INSERT policy on purpose.
+- **Cajas are composed from real catalog products** via the `box_item` join (box ↔ product); `box.items[]` mirrors the product names for display. Merchant reservation reads go through the `store_reservations()` RPC (security-definer, scoped to the owner) so a store sees the reserving customer's name+phone WITHOUT opening `profile` RLS. New reservations reach the merchant live via Supabase Realtime on the `reservation` table (`components/merchantLive.tsx`, mounted in the merchant layout).
 - **RLS is the authorization boundary.** Server actions use the user-session client (`lib/supabase/server.ts`), never the service_role key. service_role is only for seed / tests / cron.
-- Roles: `customer` (Google + email/password) and `merchant` (email/password; `/merchant/*` gated by `middleware.ts` + `profile.role`). No self-serve merchant signup (concierge; role set via dashboard/service_role). `profile.role` is not client-writable. Admin = Supabase dashboard, no custom UI.
+- Roles: `customer` (Google + email/password) and `merchant` (email/password; `/merchant/*` gated by `middleware.ts` + `profile.role`). **Self-serve merchant signup** at `/signup` ("Soy tienda" toggle) via the `register_merchant` RPC (security-definer; elevates the caller's OWN row customer→merchant and creates the `store` atomically — the only sanctioned path that writes `role`). `profile.role` stays non-client-writable through normal grants. Admin = Supabase dashboard, no custom UI.
 - Payment: `lib/payment.ts` with `cashOnPickup` (default, real) and `cardMock` (simulated). No real gateway.
 - Discovery: `list_boxes_near(lat,lng)` RPC (haversine; filters active + stock>0 + pickupEnd>now) + browser Geolocation (fallback to Guayaquil center).
+- Reviews are **per-box** (`review.boxId`, unique per reservation, only after `pickedUp`); `list_boxes_near` returns `boxRating`/`boxReviewCount` (with `storeRating` as fallback).
 
 ## DB / infra (critical for any DB work)
 
 - **The direct DB host is IPv6-only and this environment has no IPv6 → use the SESSION POOLER.** The connection string is in `.env.local` as `SUPABASE_DB_URL` (`aws-0-us-east-1.pooler.supabase.com:5432`).
 - Apply migrations with psql: `set -a; . ./.env.local; set +a` then `psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/NNNN.sql`. **Do NOT use `supabase link` / `db push`** (no access token available).
 - **`supabase gen types` needs Docker (unavailable here) → hand-author `lib/database.types.ts`** to match the schema exactly (tables/enums + a `Functions` block for the RPCs).
-- Migrations are **append-only** in `supabase/migrations/` (0001–0006 applied). Storage bucket `box-photos` is public.
+- Migrations are **append-only** in `supabase/migrations/` (0001–0018 applied). Storage bucket `box-photos` is public (also reused for store logos under `stores/`).
 
 ## Commands
 
@@ -37,7 +39,8 @@ Next.js 16 (App Router, TypeScript) · Tailwind v4 (CSS-first; bridged to `tailw
 - `npm run build` · `npx tsc --noEmit`
 - `npm test` — Vitest (geo, payment, reserveBox concurrency, RLS; some hit the live DB and create test rows)
 - `npx playwright test` — E2E customer reserve happy path
-- `npx tsx supabase/seed.ts` — seed (NOT idempotent for auth users; run once on a fresh DB)
+- `npx tsx supabase/seed.ts` — base seed: stores + demo users (NOT idempotent for auth users; run once on a fresh DB)
+- `npx tsx supabase/seedReal.ts` — real catalog: replaces products/lots/boxes with the real product data + rebuilds cajas from `box_item` (safe to re-run; wipes & reloads catalog + reservations)
 
 ## Demo accounts (seeded)
 

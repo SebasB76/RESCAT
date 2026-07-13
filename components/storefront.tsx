@@ -80,7 +80,8 @@ export function Storefront() {
     if (storeId !== "todas") list = list.filter((b) => b.storeId === storeId)
     if (tipo !== "todos") list = list.filter((b) => b.tipo === tipo)
     if (q) list = list.filter((b) => b.title.toLowerCase().includes(q) || b.storeName.toLowerCase().includes(q) || (b.items ?? []).some((it) => it.toLowerCase().includes(q)))
-    return [...list].sort((a, b) => (sort === "distance" ? a.distanceKm - b.distanceKm : b.storeRating - a.storeRating))
+    const ratingOf = (x: DiscoveryBox) => (x.boxReviewCount > 0 ? x.boxRating : x.storeRating)
+    return [...list].sort((a, b) => (sort === "distance" ? a.distanceKm - b.distanceKm : ratingOf(b) - ratingOf(a)))
   }, [boxes, storeId, tipo, sort, q])
 
   const categories = useMemo(() => {

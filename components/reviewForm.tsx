@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 
-export function ReviewForm({ reservationId, storeId }: { reservationId: string; storeId: string }) {
+export function ReviewForm({ reservationId }: { reservationId: string }) {
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState("")
   const [done, setDone] = useState(false)
 
   async function submit() {
     try {
-      await submitReview(reservationId, storeId, rating, comment)
+      await submitReview(reservationId, rating, comment)
       setDone(true)
       toast.success("¡Gracias por tu reseña!")
     } catch {

@@ -31,6 +31,8 @@ export type DiscoveryBox = {
   lng: number
   distanceKm: number
   storeRating: number
+  boxRating: number
+  boxReviewCount: number
   tipo: BoxTipo
   items: string[]
   stockQty: number
@@ -69,7 +71,9 @@ export function BoxCard({ box }: { box: DiscoveryBox }) {
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex items-center justify-between gap-2">
           <ProvenanceChip storeName={box.storeName} distanceKm={box.distanceKm} />
-          <span className="shrink-0 text-xs text-dorado">★ {box.storeRating}</span>
+          <span className="shrink-0 text-xs text-dorado">
+            {box.boxReviewCount > 0 ? `★ ${box.boxRating} (${box.boxReviewCount})` : box.storeRating > 0 ? `★ ${box.storeRating}` : "Nueva"}
+          </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <PickupWindow start={box.pickupStart} end={box.pickupEnd} />

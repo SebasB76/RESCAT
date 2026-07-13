@@ -53,7 +53,7 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
               <span className="tabular-nums text-hoja">{money(r.amount)}</span>
               <span className="rounded-full bg-pino/5 px-2 py-0.5 text-xs font-medium text-pino/70">{statusLabel(r.status)}</span>
             </div>
-            {r.reviewable && r.storeId && <ReviewForm reservationId={r.id} storeId={r.storeId} />}
+            {r.reviewable && <ReviewForm reservationId={r.id} />}
           </div>
         ))}
         {!rows.length && (

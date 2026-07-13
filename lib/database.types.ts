@@ -77,6 +77,45 @@ export type Database = {
           },
         ]
       }
+      box_item: {
+        Row: {
+          boxId: string
+          createdAt: string
+          id: string
+          productId: string
+          qty: number
+        }
+        Insert: {
+          boxId: string
+          createdAt?: string
+          id?: string
+          productId: string
+          qty?: number
+        }
+        Update: {
+          boxId?: string
+          createdAt?: string
+          id?: string
+          productId?: string
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "box_item_boxId_fkey"
+            columns: ["boxId"]
+            isOneToOne: false
+            referencedRelation: "box"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "box_item_productId_fkey"
+            columns: ["productId"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product: {
         Row: {
           brand: string | null
@@ -492,6 +531,7 @@ export type Database = {
       }
       review: {
         Row: {
+          boxId: string
           comment: string | null
           createdAt: string
           customerId: string
@@ -501,6 +541,7 @@ export type Database = {
           storeId: string
         }
         Insert: {
+          boxId: string
           comment?: string | null
           createdAt?: string
           customerId: string
@@ -510,6 +551,7 @@ export type Database = {
           storeId: string
         }
         Update: {
+          boxId?: string
           comment?: string | null
           createdAt?: string
           customerId?: string
@@ -519,6 +561,13 @@ export type Database = {
           storeId?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "review_boxId_fkey"
+            columns: ["boxId"]
+            isOneToOne: false
+            referencedRelation: "box"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "review_customerId_fkey"
             columns: ["customerId"]
@@ -630,6 +679,8 @@ export type Database = {
           lng: number
           distanceKm: number
           storeRating: number
+          boxRating: number
+          boxReviewCount: number
         }[]
       }
       lots_with_level: {
@@ -678,6 +729,36 @@ export type Database = {
           p_payment_method: Database["public"]["Enums"]["payment_method"]
         }
         Returns: Json
+      }
+      register_merchant: {
+        Args: {
+          p_store_name: string
+          p_address: string
+          p_neighborhood: string | null
+          p_lat: number
+          p_lng: number
+          p_photo_url: string | null
+          p_pickup_info: string | null
+        }
+        Returns: string
+      }
+      store_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          code: string
+          status: Database["public"]["Enums"]["reservation_status"]
+          amount: number
+          paymentMethod: Database["public"]["Enums"]["payment_method"]
+          reservedAt: string
+          pickedUpAt: string | null
+          boxId: string
+          boxTitle: string
+          storeId: string
+          storeName: string
+          customerName: string | null
+          customerPhone: string | null
+        }[]
       }
     }
     Enums: {

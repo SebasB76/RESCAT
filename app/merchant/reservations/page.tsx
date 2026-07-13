@@ -1,4 +1,4 @@
-import { ClipboardListIcon, TicketIcon, BanknoteIcon, CreditCardIcon, CheckCircle2Icon } from "lucide-react"
+import { ClipboardListIcon, TicketIcon, BanknoteIcon, CreditCardIcon, CheckCircle2Icon, UserRoundIcon, PhoneIcon } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { confirmPickup } from "@/actions/reservations"
 import { Button } from "@/components/ui/button"
@@ -14,11 +14,8 @@ const statusTone: Record<string, string> = {
 
 type Reservation = {
   id: string; code: string; status: string; amount: number
-  paymentMethod: string; box: { title: string } | { title: string }[]
-}
-
-function boxTitle(box: Reservation["box"]) {
-  return Array.isArray(box) ? box[0]?.title ?? "—" : box.title
+  paymentMethod: string; boxTitle: string
+  customerName: string | null; customerPhone: string | null
 }
 
 function Row({ r, confirm }: { r: Reservation; confirm: (fd: FormData) => void }) {
@@ -37,7 +34,11 @@ function Row({ r, confirm }: { r: Reservation; confirm: (fd: FormData) => void }
               {statusLabel(r.status)}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-sm text-pino/70">{boxTitle(r.box)}</p>
+          <p className="mt-0.5 truncate text-sm text-pino/70">{r.boxTitle}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-pino/60">
+            <span className="inline-flex items-center gap-1"><UserRoundIcon className="size-3.5" />{r.customerName ?? "Rescatista"}</span>
+            <span className="inline-flex items-center gap-1"><PhoneIcon className="size-3.5" />{r.customerPhone ?? "sin teléfono"}</span>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -66,21 +67,18 @@ function Row({ r, confirm }: { r: Reservation; confirm: (fd: FormData) => void }
 
 export default async function MerchantReservations() {
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: stores } = await supabase.from("store").select("id").eq("ownerId", user!.id)
-  const storeIds = (stores ?? []).map((s) => s.id)
-  const { data: rows } = await supabase
-    .from("reservation")
-    .select("id,code,status,amount,paymentMethod,box!inner(title,storeId)")
-    .in("box.storeId", storeIds.length ? storeIds : ["00000000-0000-0000-0000-000000000000"])
-    .order("reservedAt", { ascending: false })
+  const { data: rows } = await supabase.rpc("store_reservations")
 
   async function confirm(formData: FormData) {
     "use server"
     await confirmPickup(String(formData.get("id")))
   }
 
-  const all = (rows ?? []) as Reservation[]
+  const all: Reservation[] = (rows ?? []).map((r) => ({
+    id: r.id, code: r.code, status: r.status, amount: Number(r.amount),
+    paymentMethod: r.paymentMethod, boxTitle: r.boxTitle,
+    customerName: r.customerName, customerPhone: r.customerPhone,
+  }))
   const pending = all.filter((r) => r.status === "reserved" || r.status === "paid")
   const history = all.filter((r) => r.status !== "reserved" && r.status !== "paid")
 
@@ -88,7 +86,7 @@ export default async function MerchantReservations() {
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-3xl text-pino">Reservas</h1>
-        <p className="mt-1 text-sm text-pino/60">Confirma los retiros con el código que muestra cada Rescatista.</p>
+        <p className="mt-1 text-sm text-pino/60">Confirma los retiros con el código que muestra cada Rescatista. Verás quién reservó y su contacto.</p>
       </div>
 
       {!all.length ? (

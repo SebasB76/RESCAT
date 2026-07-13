@@ -11,6 +11,12 @@ export default async function EditBoxPage({ params }: { params: Promise<{ id: st
   const { data: b } = await supabase.from("box").select("*").eq("id", id).single()
   if (!b) notFound()
 
+  const [{ data: products }, { data: items }] = await Promise.all([
+    supabase.from("product").select("id,name,brand,price").eq("storeId", b.storeId).order("name"),
+    supabase.from("box_item").select("productId, qty").eq("boxId", id),
+  ])
+  const initialProducts = (items ?? []).map((i) => ({ productId: i.productId, qty: i.qty }))
+
   async function onSubmit(input: BoxInput) {
     "use server"
     await updateBox(id, input)
@@ -31,6 +37,8 @@ export default async function EditBoxPage({ params }: { params: Promise<{ id: st
             stockQty: String(b.stockQty), bestBefore: b.bestBefore ?? "",
             pickupStart: b.pickupStart.slice(0, 16), pickupEnd: b.pickupEnd.slice(0, 16), photoUrl: b.photoUrl,
           }}
+          initialProducts={initialProducts}
+          products={products ?? []}
           onSubmit={onSubmit}
         />
       </div>

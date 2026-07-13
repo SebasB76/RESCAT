@@ -1,9 +1,9 @@
 "use client"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { createBrowserClient } from "@/lib/supabase/client"
-import type { BoxInput } from "@/actions/boxes"
+import type { BoxInput, BoxProduct } from "@/actions/boxes"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,6 +17,8 @@ export type BoxFormValues = {
   originalPrice: string; price: string; stockQty: string
   bestBefore: string; pickupStart: string; pickupEnd: string; photoUrl: string | null
 }
+
+export type BoxFormProduct = { id: string; name: string; brand: string | null; price: number }
 
 const categorySuggestions = ["Panadería", "Lácteos", "Frutas y verduras", "Abarrotes", "Cárnicos", "Bebidas", "Snacks", "Congelados", "Comida preparada"]
 
@@ -47,18 +49,45 @@ function Field({ id, label, required, help, children }: { id: string; label: str
 
 const inputCls = "h-11"
 
-export function BoxForm({ initial, onSubmit }: { initial: BoxFormValues; onSubmit: (input: BoxInput) => Promise<void> }) {
+function itemLabel(p: BoxFormProduct, qty: number) {
+  const base = p.brand && !p.name.includes(p.brand) ? `${p.name} · ${p.brand}` : p.name
+  return qty > 1 ? `${qty}× ${base}` : base
+}
+
+export function BoxForm({ initial, initialProducts = [], products, onSubmit }: {
+  initial: BoxFormValues
+  initialProducts?: BoxProduct[]
+  products: BoxFormProduct[]
+  onSubmit: (input: BoxInput) => Promise<void>
+}) {
   const supabase = createBrowserClient()
   const [v, setV] = useState<BoxFormValues>(initial)
+  const [sel, setSel] = useState<BoxProduct[]>(initialProducts)
+  const [prodQuery, setProdQuery] = useState("")
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const set = (k: keyof BoxFormValues) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setV({ ...v, [k]: e.target.value })
+
+  const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
+  const filtered = useMemo(() => {
+    const q = prodQuery.trim().toLowerCase()
+    if (!q) return products
+    return products.filter((p) => p.name.toLowerCase().includes(q) || (p.brand ?? "").toLowerCase().includes(q))
+  }, [products, prodQuery])
+  const selValue = useMemo(() => sel.reduce((s, r) => s + (byId.get(r.productId)?.price ?? 0) * r.qty, 0), [sel, byId])
 
   const orig = Number(v.originalPrice)
   const resc = Number(v.price)
   const hasPrices = v.originalPrice !== "" && v.price !== "" && orig > 0 && resc >= 0
   const priceError = hasPrices && resc > orig
   const discount = hasPrices && !priceError ? Math.round((1 - resc / orig) * 100) : null
+
+  function toggle(id: string) {
+    setSel((prev) => (prev.some((s) => s.productId === id) ? prev.filter((s) => s.productId !== id) : [...prev, { productId: id, qty: 1 }]))
+  }
+  function setQty(id: string, qty: number) {
+    setSel((prev) => prev.map((s) => (s.productId === id ? { ...s, qty } : s)))
+  }
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -74,13 +103,17 @@ export function BoxForm({ initial, onSubmit }: { initial: BoxFormValues; onSubmi
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (priceError) return toast.error("El precio de rescate no puede superar el original")
+    const composed = sel.length > 0
+    const items = composed
+      ? sel.map((s) => { const p = byId.get(s.productId); return p ? itemLabel(p, s.qty) : "" }).filter(Boolean)
+      : v.items.split("\n").map((s) => s.trim()).filter(Boolean)
     setBusy(true)
     try {
       await onSubmit({
-        title: v.title, description: v.description, category: v.category,
-        items: v.items.split("\n").map((s) => s.trim()).filter(Boolean),
+        title: v.title, description: v.description, category: v.category, items,
         originalPrice: Number(v.originalPrice), price: Number(v.price), stockQty: Number(v.stockQty),
         bestBefore: v.bestBefore, pickupStart: v.pickupStart, pickupEnd: v.pickupEnd, photoUrl: v.photoUrl,
+        products: sel,
       })
     } catch {
       toast.error("No se pudo guardar")
@@ -97,14 +130,42 @@ export function BoxForm({ initial, onSubmit }: { initial: BoxFormValues; onSubmi
         <Field id="description" label="Descripción">
           <Textarea id="description" className="min-h-24" value={v.description} onChange={set("description")} placeholder="Cuenta qué suele venir y por qué vale la pena rescatarla." />
         </Field>
-        <Field id="items" label="Ítems" help="Un ítem por línea. Ej. 2 panes integrales, 1 funda de galletas…">
-          <Textarea id="items" className="min-h-24" value={v.items} onChange={set("items")} placeholder={"Pan integral\nGalletas\nMuffin de arándano"} />
-        </Field>
         <Field id="category" label="Categoría" help="Escribe o elige una categoría.">
           <Input id="category" className={inputCls} value={v.category} onChange={set("category")} list="box-categories" placeholder="Panadería" />
           <datalist id="box-categories">
             {categorySuggestions.map((c) => <option key={c} value={c} />)}
           </datalist>
+        </Field>
+      </Section>
+
+      <Section title="Contenido desde tu catálogo" desc="Arma la caja con tus productos reales. Lo que selecciones define los ítems y el valor de catálogo.">
+        <Input className={inputCls} value={prodQuery} onChange={(e) => setProdQuery(e.target.value)} placeholder="Buscar producto…" />
+        <div className="max-h-64 space-y-0.5 overflow-y-auto rounded-lg border border-pino/10 p-1">
+          {filtered.map((p) => {
+            const cur = sel.find((s) => s.productId === p.id)
+            return (
+              <div key={p.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-cream">
+                <input type="checkbox" id={`p-${p.id}`} checked={!!cur} onChange={() => toggle(p.id)} className="size-4 accent-hoja" />
+                <label htmlFor={`p-${p.id}`} className="min-w-0 flex-1 cursor-pointer truncate text-sm text-pino">{p.name}{p.brand ? ` · ${p.brand}` : ""}</label>
+                <span className="shrink-0 text-xs tabular-nums text-pino/50">{money(p.price)}</span>
+                {cur && (
+                  <input type="number" min="1" value={cur.qty} onChange={(e) => setQty(p.id, Math.max(1, Number(e.target.value) || 1))} className="h-7 w-14 rounded border border-pino/15 px-1 text-center text-sm tabular-nums" aria-label={`Cantidad de ${p.name}`} />
+                )}
+              </div>
+            )
+          })}
+          {!filtered.length && (
+            <p className="px-2 py-3 text-center text-sm text-pino/40">{products.length === 0 ? "Aún no tienes catálogo en esta tienda." : "Ningún producto coincide."}</p>
+          )}
+        </div>
+        {sel.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="text-pino/60">{sel.length} producto(s) · valor de catálogo <span className="font-medium tabular-nums text-pino">{money(selValue)}</span></span>
+            <Button type="button" variant="outline" className="h-8" onClick={() => setV({ ...v, originalPrice: selValue.toFixed(2) })}>Usar como precio original</Button>
+          </div>
+        )}
+        <Field id="items" label="Ítems (manual)" help="Se usa solo si no seleccionas productos del catálogo arriba. Un ítem por línea.">
+          <Textarea id="items" className="min-h-20" value={v.items} onChange={set("items")} placeholder={"Pan integral\nGalletas\nMuffin de arándano"} disabled={sel.length > 0} />
         </Field>
       </Section>
 
