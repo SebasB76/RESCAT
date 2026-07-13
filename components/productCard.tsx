@@ -1,69 +1,21 @@
 "use client"
+import { PlusIcon, ShoppingBasketIcon } from "lucide-react"
+import Image from "next/image"
 import { toast } from "sonner"
 import { useCart } from "@/components/cartProvider"
 import { Button } from "@/components/ui/button"
 
-export type CatalogProduct = {
-  id: string
-  name: string
-  brand: string | null
-  category: string | null
-  subcategory: string | null
-  price: number
-  photoUrl: string | null
-  storeId: string
-  storeName: string
-}
-
+export type CatalogProduct = { id: string; name: string; brand: string | null; category: string | null; subcategory: string | null; price: number; photoUrl: string | null; storeId: string; storeName: string }
 export function ProductCard({ product, variants }: { product: CatalogProduct; variants?: CatalogProduct[] }) {
   const { addItem } = useCart()
   const all = variants && variants.length > 0 ? variants : [product]
   const cheapest = all.reduce((a, b) => (b.price < a.price ? b : a))
-  const multiStore = all.length > 1
   const others = all.length - 1
-
-  function add() {
-    addItem({
-      productId: cheapest.id,
-      name: cheapest.name,
-      price: cheapest.price,
-      photoUrl: cheapest.photoUrl,
-      storeId: cheapest.storeId,
-      storeName: cheapest.storeName,
-    })
-    toast.success(`${cheapest.name} agregado`)
-  }
-
+  function add() { addItem({ productId: cheapest.id, name: cheapest.name, price: cheapest.price, photoUrl: cheapest.photoUrl, storeId: cheapest.storeId, storeName: cheapest.storeName }); toast.success(`${cheapest.name} agregado`) }
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-pino/10 bg-white shadow-sm">
-      <div className="flex h-32 items-center justify-center bg-cream">
-        {product.photoUrl ? (
-          <img src={product.photoUrl} alt={product.name} className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-3xl opacity-40">🛒</span>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col p-3">
-        <h3 className="text-sm font-medium leading-tight text-pino">{product.name}</h3>
-        <p className="mt-0.5 text-xs text-hoja">
-          {product.brand && <span className="font-semibold">{product.brand}</span>}
-          {product.brand && product.subcategory ? " · " : ""}
-          {product.subcategory}
-        </p>
-        <p className="mt-1 font-display text-lg text-pino">
-          {multiStore && <span className="font-sans text-xs text-pino/50">desde </span>}${cheapest.price.toFixed(2)}
-        </p>
-        <p className="text-[0.68rem] text-pino/50">
-          {multiStore ? `${cheapest.storeName} · +${others} ${others === 1 ? "tienda" : "tiendas"}` : product.storeName}
-        </p>
-        <Button
-          onClick={add}
-          variant="outline"
-          className="mt-2 w-full border-hoja text-hoja hover:bg-pino hover:text-white"
-        >
-          Agregar
-        </Button>
-      </div>
-    </div>
+    <article className="group flex min-w-0 flex-col bg-white ring-1 ring-pino/12 transition-colors hover:ring-pino/25">
+      <div className="relative aspect-square overflow-hidden bg-pino/[0.035]">{product.photoUrl ? <Image src={product.photoUrl} alt={product.name} fill sizes="(min-width: 1280px) 240px, (min-width: 640px) 33vw, 50vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transform-none" /> : <div className="flex h-full items-center justify-center text-pino/20"><ShoppingBasketIcon className="size-8" /></div>}</div>
+      <div className="flex flex-1 flex-col p-3"><p className="text-xs font-semibold text-hoja">{product.brand ?? product.category ?? "Producto local"}</p><h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-pino">{product.name}</h3><p className="mt-1 line-clamp-1 text-xs text-pino/70">{cheapest.storeName}{others > 0 ? ` · +${others} ${others === 1 ? "tienda" : "tiendas"}` : ""}</p><div className="mt-auto flex items-center justify-between gap-2 pt-3"><p className="text-lg font-black tracking-[-0.02em] text-pino tabular-nums">{all.length > 1 && <span className="mr-1 text-[0.65rem] font-medium text-pino/70">desde</span>}${cheapest.price.toFixed(2)}</p><Button onClick={add} size="icon-sm" aria-label={`Agregar ${product.name}`} className="size-8 rounded-md bg-dorado text-pino hover:bg-pino hover:text-white"><PlusIcon className="size-4" /></Button></div></div>
+    </article>
   )
 }

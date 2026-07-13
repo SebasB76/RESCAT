@@ -15,8 +15,8 @@ export default async function MerchantLayout({ children }: { children: React.Rea
     <div className="min-h-dvh bg-cream lg:flex">
       <MerchantLive />
       <MerchantNav stores={stores ?? []} email={user.email ?? null} />
-      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
-        <div className="mx-auto w-full max-w-6xl">{children}</div>
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 xl:px-10">
+        <div className="mx-auto w-full max-w-7xl">{children}</div>
       </main>
     </div>
   )

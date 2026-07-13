@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import Link from "next/link"
+import { AuthFrame } from "@/components/authFrame"
 
 function safeNext(next: string | null): string {
   return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/"
@@ -30,16 +32,19 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto max-w-sm px-6 py-16">
-      <h1 className="font-display text-3xl sm:text-4xl text-pino">Entrar a RESCAT</h1>
-      <Button onClick={google} className="mt-6 w-full bg-pino">Continuar con Google</Button>
-      <div className="my-4 text-center text-sm text-hoja">o con tu correo</div>
-      <form onSubmit={emailLogin} className="space-y-3">
-        <div><Label>Correo</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required /></div>
-        <div><Label>Contraseña</Label><Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required /></div>
-        <Button type="submit" variant="outline" className="w-full">Entrar</Button>
+    <AuthFrame>
+      <p className="text-sm font-semibold text-hoja">Qué bueno verte de nuevo</p>
+      <h1 className="mt-2 text-3xl font-black tracking-[-0.035em] text-pino">Entra a RESCAT</h1>
+      <p className="mt-2 text-sm leading-6 text-pino/72">Revisa tus pedidos o gestiona el inventario de tu tienda.</p>
+      <Button onClick={google} size="lg" className="mt-7 w-full bg-pino">Continuar con Google</Button>
+      <div className="my-5 flex items-center gap-3 text-xs text-pino/70"><span className="h-px flex-1 bg-pino/12" />o usa tu correo<span className="h-px flex-1 bg-pino/12" /></div>
+      <form onSubmit={emailLogin} className="space-y-4">
+        <div><Label>Correo</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" required /></div>
+        <div><Label>Contraseña</Label><Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" required /></div>
+        <Button type="submit" variant="outline" size="lg" className="w-full">Entrar con correo</Button>
       </form>
-    </main>
+      <p className="mt-7 text-center text-sm text-pino/72">¿Primera vez? <Link href="/signup" className="font-semibold text-hoja hover:text-pino">Crea tu cuenta</Link></p>
+    </AuthFrame>
   )
 }
 

@@ -3,6 +3,7 @@ import Link from "next/link"
 import { createServerClient } from "@/lib/supabase/server"
 import { BoxReserve, type ReserveBox } from "@/components/boxReserve"
 import { money } from "@/lib/format"
+import { BrandMark } from "@/components/brandMark"
 
 export default async function BoxDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -44,19 +45,22 @@ export default async function BoxDetail({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-6 sm:py-10">
-      <Link href="/" className="mb-4 inline-flex items-center gap-1 text-sm text-pino hover:text-hoja">← Volver a la tienda</Link>
+    <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <BrandMark />
+        <Link href="/" className="text-sm font-semibold text-hoja hover:text-pino">Volver a la tienda</Link>
+      </div>
       <BoxReserve box={detail} />
 
       {items.length > 0 && (
         <section className="mt-6">
-          <h2 className="font-display text-lg text-pino">Contenido real</h2>
-          <p className="text-sm text-pino/60">Productos del catálogo de {store.name} que rescatas en esta caja.</p>
-          <div className="mt-3 divide-y divide-pino/5 overflow-hidden rounded-xl border border-pino/10 bg-white">
+          <h2 className="text-lg font-bold text-pino">Contenido verificado</h2>
+          <p className="text-sm text-pino/72">Productos del catálogo de {store.name} que rescatas en esta caja.</p>
+          <div className="mt-3 divide-y divide-pino/10 overflow-hidden rounded-xl bg-white ring-1 ring-pino/12">
             {items.map((it, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <span className="text-pino">{it.qty > 1 ? `${it.qty}× ` : ""}{it.name}{it.brand ? ` · ${it.brand}` : ""}</span>
-                <span className="tabular-nums text-pino/60">{money(it.price * it.qty)}</span>
+                <span className="tabular-nums text-pino/72">{money(it.price * it.qty)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between bg-cream/50 px-4 py-2.5 text-sm font-semibold">
@@ -68,10 +72,10 @@ export default async function BoxDetail({ params }: { params: Promise<{ id: stri
       )}
 
       <section className="mt-6">
-        <h2 className="font-display text-lg text-pino">Reseñas de esta caja · ★ {avg}</h2>
+        <h2 className="text-lg font-bold text-pino">Reseñas de esta caja · ★ {avg}</h2>
         <div className="mt-3 space-y-3">
           {reviews?.map((r, i) => (
-            <div key={i} className="rounded-xl border border-pino/10 bg-white p-3">
+            <div key={i} className="rounded-lg bg-white p-4 ring-1 ring-pino/12">
               <div className="text-dorado">{"★".repeat(r.rating)}</div>
               {r.comment && <p className="mt-1 text-sm text-pino/80">{r.comment}</p>}
             </div>

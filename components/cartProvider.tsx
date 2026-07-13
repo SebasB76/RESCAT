@@ -32,17 +32,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    let nextItems: CartItem[] = []
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       const parsed = raw ? JSON.parse(raw) : []
       const valid = Array.isArray(parsed)
         ? parsed.filter((i) => i && typeof i.productId === "string" && typeof i.price === "number" && typeof i.qty === "number" && i.qty > 0)
         : []
-      setItems(valid as CartItem[])
-    } catch {
-      setItems([])
-    }
-    setReady(true)
+      nextItems = valid as CartItem[]
+    } catch {}
+    queueMicrotask(() => {
+      setItems(nextItems)
+      setReady(true)
+    })
   }, [])
 
   useEffect(() => {

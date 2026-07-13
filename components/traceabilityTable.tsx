@@ -203,7 +203,7 @@ export function TraceabilityTable({ rows }: { rows: TraceabilityRow[] }) {
                 <td className="px-3 py-2 text-right text-pino">{r.qty}</td>
                 <td className="px-3 py-2 text-right text-pino/80">{money(r.unitCost)}</td>
                 <td className="px-3 py-2 text-right font-medium text-pino">{money(r.totalValue)}</td>
-                <td className="px-3 py-2 text-right text-dorado">{r.autoDiscountPct > 0 ? `-${r.autoDiscountPct}%` : "—"}</td>
+                <td className="px-3 py-2 text-right font-semibold text-pino/80">{r.autoDiscountPct > 0 ? `-${r.autoDiscountPct}%` : "—"}</td>
                 <td className="px-3 py-2 text-right font-semibold text-hoja">{r.autoDiscountPct > 0 ? money(r.rescatPrice) : "—"}</td>
               </tr>
             ))}

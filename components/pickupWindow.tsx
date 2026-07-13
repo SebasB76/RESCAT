@@ -28,7 +28,7 @@ export function PickupWindow({
   const sameDay = start ? dayKey(start) === dayKey(end) : false
   const label = sameDay && start ? `${hhmm(start)}–${hhmm(end)}` : `hasta ${hhmm(end)}`
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full bg-dorado/20 px-2 py-0.5 text-xs font-medium text-pino ${className}`}>
+    <span className={`inline-flex items-center gap-1 rounded-md bg-dorado/35 px-2 py-1 text-xs font-semibold text-pino ${className}`}>
       <Clock className="size-3" /> Recoge {label}
     </span>
   )

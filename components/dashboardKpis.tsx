@@ -8,15 +8,14 @@ export type DashboardKpi = {
 
 export function DashboardKpis({ items }: { items: DashboardKpi[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-      {items.map((k) => (
-        <div key={k.label} className="relative overflow-hidden rounded-xl border border-pino/10 bg-white p-4">
-          <span className={`absolute inset-x-0 top-0 h-1 ${k.accent}`} />
-          <p className="text-xs uppercase tracking-wide text-pino/40">{k.label}</p>
-          <p className={`mt-2 font-display text-2xl ${k.urgent ? "text-terracota" : "text-pino"}`}>{k.value}</p>
-          <p className="mt-0.5 text-xs text-pino/50">{k.sub}</p>
+    <dl className="grid grid-cols-2 overflow-hidden rounded-xl bg-white ring-1 ring-pino/12 lg:grid-cols-5">
+      {items.map((item) => (
+        <div key={item.label} className="border-b border-l border-pino/10 p-4 odd:border-l-0 last:col-span-2 last:border-b-0 lg:col-span-1 lg:border-b-0 lg:border-l lg:first:border-l-0 lg:last:col-span-1">
+          <dt className="text-sm font-medium text-pino/72">{item.label}</dt>
+          <dd className={`mt-2 text-2xl font-black tracking-[-0.035em] tabular-nums ${item.urgent ? "text-terracota" : "text-pino"}`}>{item.value}</dd>
+          <p className="mt-1 text-xs leading-5 text-pino/70">{item.sub}</p>
         </div>
       ))}
-    </div>
+    </dl>
   )
 }

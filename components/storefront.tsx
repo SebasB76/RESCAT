@@ -13,7 +13,8 @@ import { CartProvider } from "@/components/cartProvider"
 import { Cart } from "@/components/cart"
 import { BoxModal } from "@/components/boxModal"
 import { CategoryFilter } from "@/components/categoryFilter"
-import { Input } from "@/components/ui/input"
+import { BrandMark } from "@/components/brandMark"
+import { StoreIcon } from "lucide-react"
 
 const DiscoveryMap = dynamic(() => import("@/components/discoveryMap"), { ssr: false })
 const GYE = { lat: -2.1709, lng: -79.9224 }
@@ -62,8 +63,11 @@ export function Storefront() {
       })
     }
     if (!navigator.geolocation) {
-      setDenied(true)
-      load(GYE.lat, GYE.lng)
+      queueMicrotask(() => {
+        if (!active) return
+        setDenied(true)
+        load(GYE.lat, GYE.lng)
+      })
     } else {
       navigator.geolocation.getCurrentPosition(
         (pos) => load(pos.coords.latitude, pos.coords.longitude),
@@ -116,41 +120,47 @@ export function Storefront() {
     return Math.round((sum / boxes.length) * 100)
   }, [boxes])
 
+  const featuredBoxes = useMemo(() => {
+    const withPhotos = boxes.filter((box) => box.photoUrl)
+    return (withPhotos.length > 0 ? withPhotos : boxes).slice(0, 5)
+  }, [boxes])
+
   return (
     <CartProvider>
-      <div className="min-h-dvh bg-cream">
-        <header className="sticky top-0 z-30 border-b border-pino/10 bg-cream/90 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-            <Link href="/" className="flex items-center" aria-label="RESCAT">
-              <img src="/logo.png" alt="RESCAT" className="h-8 w-auto" />
-            </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <a href="#catalogo" className="hidden text-pino hover:text-hoja sm:inline">Catálogo</a>
+      <div className="min-h-dvh overflow-x-clip bg-cream">
+        <header className="sticky top-0 z-30 border-b border-pino/12 bg-cream/95 backdrop-blur-md">
+          <div className="product-shell flex h-16 items-center justify-between gap-4">
+            <BrandMark />
+            <nav className="flex items-center gap-4 text-sm font-medium" aria-label="Navegación principal">
+              <Link href="/merchant" className="hidden items-center gap-1.5 text-pino/72 transition-colors hover:text-pino md:inline-flex"><StoreIcon className="size-4" /> Soy tienda</Link>
+              <a href="#cajas" className="hidden font-semibold text-pino transition-colors hover:text-hoja sm:inline">Cajas</a>
+              <a href="#catalogo" className="hidden text-pino/72 transition-colors hover:text-pino md:inline">Productos</a>
               {signedIn ? (
                 <>
-                  <Link href="/reservations" className="text-pino hover:text-hoja">Mis pedidos</Link>
-                  <SignOutButton className="h-8 px-3 py-0 text-xs" />
+                  <Link href="/reservations" className="text-pino transition-colors hover:text-hoja">Mis pedidos</Link>
+                  <SignOutButton className="hidden sm:inline-flex" />
                 </>
               ) : (
-                <Link href="/login" className="rounded-lg bg-pino px-3 py-1.5 text-cream transition hover:bg-pino/90">Entrar</Link>
+                <Link href="/login" className="rounded-lg bg-pino px-4 py-2 text-white transition-colors hover:bg-hoja">Entrar</Link>
               )}
             </nav>
           </div>
         </header>
 
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-          <HeroStats boxesCount={boxes.length} productCount={products.length} avgSavingsPct={avgSavingsPct} />
+        <main className="product-shell">
+          <HeroStats
+            boxesCount={boxes.length}
+            avgSavingsPct={avgSavingsPct}
+            search={search}
+            onSearchChange={setSearch}
+            denied={denied}
+            featuredBoxes={featuredBoxes}
+          />
 
-          <div className="mt-6">
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar caja o producto…" className="h-11 max-w-xl" />
-          </div>
-
-          {denied && <p className="mt-4 text-sm text-hoja">Mostrando resultados en Guayaquil (activa tu ubicación para ver lo más cercano).</p>}
-
-          <section className="mt-8">
-            <div className="mb-4">
-              <h2 className="font-display text-xl text-pino">Cajas sorpresa</h2>
-              <p className="text-sm text-hoja">Sorpresas de productos por vencer a precio rescate.</p>
+          <section id="cajas" className="scroll-mt-24 py-12 sm:py-16">
+            <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div><h2 className="section-title">Cajas disponibles hoy</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-pino/72">Elige una caja por tamaño, tienda y distancia. Cada una convierte varios excedentes en una sola compra con ahorro real.</p></div>
+              <p className="text-sm font-medium text-hoja">Reserva ahora · paga al retirar</p>
             </div>
             <DiscoveryFilters
               stores={stores}
@@ -164,38 +174,42 @@ export function Storefront() {
               onViewChange={setView}
               resultCount={filteredBoxes.length}
             />
-            <div className="mt-6">
+            <div className="mt-7">
               {loading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-72 animate-pulse rounded-2xl bg-white/60" />)}
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => <div key={i} className="aspect-[4/5] animate-pulse rounded-xl bg-pino/[0.06]" />)}
                 </div>
               ) : filteredBoxes.length === 0 ? (
-                <p className="py-12 text-center text-hoja">No hay cajas con estos filtros.</p>
+                <div className="border-y border-pino/12 py-14 text-center"><p className="font-semibold text-pino">No hay cajas con estos filtros.</p><p className="mt-1 text-sm text-pino/72">Prueba otra tienda o tamaño.</p></div>
               ) : view === "list" ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{filteredBoxes.map((b) => <BoxCard key={b.id} box={b} />)}</div>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{filteredBoxes.map((b) => <BoxCard key={b.id} box={b} />)}</div>
               ) : (
                 <DiscoveryMap boxes={filteredBoxes} center={center} />
               )}
             </div>
           </section>
 
-          <section id="catalogo" className="mt-12 scroll-mt-20 border-t border-pino/10 pt-10">
-            <div className="mb-4">
-              <h2 className="font-display text-xl text-pino">Catálogo de abarrotes</h2>
-              <p className="text-sm text-pino/70">Compra productos individuales y retíralos en la tienda.</p>
+          <section id="catalogo" className="scroll-mt-24 border-t border-pino/15 py-12 sm:py-16">
+            <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div><h2 className="section-title">¿Buscas algo específico?</h2><p className="mt-2 text-sm leading-6 text-pino/72">El catálogo por producto es una alternativa para completar tu compra. Las cajas siguen siendo la forma principal de rescatar.</p></div>
+              <p className="text-sm font-semibold text-pino">{productGroups.length} resultados</p>
             </div>
-            <div className="mb-6">
+            <div className="mb-7">
               <CategoryFilter categories={categories} value={category} onChange={setCategory} />
             </div>
             {productGroups.length === 0 ? (
-              <p className="py-12 text-center text-hoja">No hay productos que coincidan.</p>
+              <p className="border-y border-pino/12 py-12 text-center text-pino/60">No hay productos que coincidan.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-pino/12 ring-1 ring-pino/12 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {productGroups.map(([key, variants]) => <ProductCard key={key} product={variants[0]} variants={variants} />)}
               </div>
             )}
           </section>
         </main>
+
+        <footer className="border-t border-pino/15 bg-pino text-white">
+          <div className="product-shell flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between"><BrandMark onDark /><p className="max-w-xl text-sm leading-6 text-white/68">Una red de tiendas y rescatistas que convierte excedentes en ahorro local.</p><Link href="/merchant" className="text-sm font-semibold text-dorado hover:text-white">Publicar como tienda →</Link></div>
+        </footer>
 
         <Cart />
         {boxParam && <BoxModal id={boxParam} />}

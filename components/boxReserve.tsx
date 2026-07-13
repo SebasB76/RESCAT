@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { toast } from "sonner"
 import { BanknoteIcon, CheckIcon, CreditCardIcon, ShoppingBasketIcon, XIcon } from "lucide-react"
 import { reserveBox } from "@/actions/reservations"
@@ -66,43 +67,44 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
-      <div className="relative h-48 bg-cream">
+    <div className="overflow-hidden rounded-xl bg-white ring-1 ring-pino/12">
+      <div className="relative aspect-[16/9] max-h-72 bg-pino/[0.04]">
         {box.photoUrl ? (
-          <img src={box.photoUrl} alt={box.title} className="h-full w-full object-cover" />
+          <Image src={box.photoUrl} alt={box.title} fill sizes="(min-width: 640px) 640px, 100vw" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-pino/20"><ShoppingBasketIcon className="size-14" /></div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-pino/80 to-transparent" />
         <RescueBadge className="absolute top-3 left-3 shadow-sm" />
         {onClose && (
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-white/90 text-pino transition hover:bg-white"
+            className="absolute top-3 right-3 flex size-10 items-center justify-center rounded-lg bg-white text-pino ring-1 ring-pino/12 transition-colors hover:bg-cream"
           >
             <XIcon className="size-4" />
           </button>
         )}
-        <h2 className="absolute right-4 bottom-3 left-4 font-display text-2xl text-white drop-shadow">{box.title}</h2>
+      </div>
+      <div className="px-5 pt-5">
+        <ProvenanceChip storeName={box.storeName} />
+        <h2 className="mt-3 text-2xl font-black leading-tight tracking-[-0.035em] text-pino">{box.title}</h2>
       </div>
 
       {code ? (
-        <div className="p-6 text-center">
+        <div className="p-5 text-center sm:p-6">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-hoja/15 text-hoja">
             <CheckIcon className="size-7" />
           </div>
-          <p className="mt-3 font-display text-xl text-pino">¡Reserva confirmada!</p>
+          <p className="mt-3 text-xl font-bold text-pino">Reserva confirmada</p>
           <p className="mt-1 text-sm text-hoja">Muestra este código en {box.storeName} al retirar.</p>
-          <p className="mt-4 rounded-xl border border-dashed border-pino/25 bg-cream py-3 font-mono text-2xl font-bold tracking-widest text-pino">{code}</p>
+          <p className="mt-4 rounded-lg bg-dorado/35 py-3 font-mono text-2xl font-bold tracking-widest text-pino ring-1 ring-pino/12">{code}</p>
           <div className="mt-5 flex gap-2">
             <Button onClick={() => router.push("/reservations")} variant="outline" className="flex-1 border-pino/20">Mis pedidos</Button>
             <Button onClick={onClose ?? (() => router.push("/"))} className="flex-1 bg-pino">Listo</Button>
           </div>
         </div>
       ) : (
-        <div className="space-y-4 p-5">
-          <ProvenanceChip storeName={box.storeName} />
+        <div className="space-y-4 p-5 pt-4">
           <div className="flex flex-wrap gap-2">
             <PickupWindow start={box.pickupStart} end={box.pickupEnd} />
             <ScarcityBadge stock={box.stockQty} />
@@ -111,20 +113,20 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
           {box.description && <p className="text-sm text-pino/80">{box.description}</p>}
           {box.items?.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-semibold tracking-wide text-pino/50 uppercase">Qué incluye</p>
-              <ul className="space-y-1">
+              <p className="mb-2 text-sm font-bold text-pino">Qué incluye</p>
+              <ul className="divide-y divide-pino/10 border-y border-pino/10">
                 {box.items.map((it, i) => (
-                  <li key={i} className="flex items-center gap-2 rounded-lg bg-cream px-3 py-1.5 text-sm text-pino">
+                  <li key={i} className="flex items-center gap-2 py-2 text-sm text-pino">
                     <span className="text-hoja">•</span>{it}
                   </li>
                 ))}
               </ul>
             </div>
           )}
-          <div className="flex items-center justify-between rounded-xl border border-hoja/20 bg-hoja/5 px-4 py-3">
+          <div className="flex items-center justify-between rounded-lg bg-pino/[0.045] px-4 py-3">
             <div>
               <p className="text-xs text-pino/50">Precio rescate</p>
-              <p className="font-display text-2xl text-pino tabular-nums">{money(box.price)}</p>
+              <p className="text-2xl font-black tracking-[-0.03em] text-pino tabular-nums">{money(box.price)}</p>
               {saved > 0 && <p className="text-sm font-semibold text-hoja">Ahorras {money(saved)}</p>}
             </div>
             <div className="text-right">
@@ -139,18 +141,22 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
           ) : (
             <>
               <div>
-                <p className="mb-1.5 text-xs font-semibold tracking-wide text-pino/50 uppercase">Forma de pago</p>
+                <p className="mb-2 text-sm font-bold text-pino">Forma de pago</p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
+                    type="button"
                     onClick={() => setMethod("cashOnPickup")}
-                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-sm transition ${method === "cashOnPickup" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60 hover:border-pino/30"}`}
+                    aria-pressed={method === "cashOnPickup"}
+                    className={`flex flex-col items-center gap-1 rounded-lg p-3 text-sm font-semibold transition-colors ${method === "cashOnPickup" ? "bg-pino text-white" : "bg-pino/5 text-pino/60 hover:bg-pino/10"}`}
                   >
                     <BanknoteIcon className="size-5" />Efectivo
                     <span className="text-[0.68rem] text-pino/40">Al retirar</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setMethod("cardMock")}
-                    className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-sm transition ${method === "cardMock" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60 hover:border-pino/30"}`}
+                    aria-pressed={method === "cardMock"}
+                    className={`flex flex-col items-center gap-1 rounded-lg p-3 text-sm font-semibold transition-colors ${method === "cardMock" ? "bg-pino text-white" : "bg-pino/5 text-pino/60 hover:bg-pino/10"}`}
                   >
                     <CreditCardIcon className="size-5" />Tarjeta
                     <span className="text-[0.68rem] text-pino/40">Débito o crédito</span>
@@ -158,7 +164,7 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
                 </div>
               </div>
               {method === "cardMock" && (
-                <div className="space-y-2 rounded-xl border border-pino/10 bg-cream/50 p-3">
+                <div className="space-y-2 rounded-lg bg-pino/[0.035] p-3 ring-1 ring-pino/10">
                   <Input placeholder="Número de tarjeta" inputMode="numeric" />
                   <div className="grid grid-cols-2 gap-2">
                     <Input placeholder="MM/AA" />
@@ -166,7 +172,7 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
                   </div>
                 </div>
               )}
-              <Button onClick={confirm} disabled={busy} className="w-full bg-pino py-6 text-base">
+              <Button onClick={confirm} disabled={busy} size="lg" className="w-full bg-pino text-base">
                 {busy ? "Procesando…" : `Confirmar reserva · ${money(box.price)}`}
               </Button>
             </>

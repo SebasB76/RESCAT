@@ -1,8 +1,9 @@
 "use client"
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { toast } from "sonner"
-import { MinusIcon, PlusIcon, ShoppingCartIcon, Trash2Icon, XIcon } from "lucide-react"
+import { BanknoteIcon, CheckCircle2Icon, CreditCardIcon, MinusIcon, PlusIcon, ShoppingCartIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useCart, type CartItem } from "@/components/cartProvider"
 import { createOrder, type OrderResult } from "@/actions/orders"
 import { type PaymentMethod } from "@/lib/payment"
@@ -66,29 +67,37 @@ export function Cart() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         aria-label="Abrir carrito"
-        className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-pino px-5 py-3 text-cream shadow-lg transition hover:bg-pino/90"
+        className="group fixed bottom-4 right-4 z-30 flex min-h-12 items-center gap-2 rounded-full bg-dorado px-4 text-pino ring-1 ring-pino/15 transition-colors hover:bg-pino hover:text-white sm:bottom-6 sm:right-6"
       >
         <ShoppingCartIcon className="size-5" />
         <span className="text-sm font-medium">Carrito</span>
         {count > 0 && (
-          <span className="flex size-5 items-center justify-center rounded-full bg-dorado text-xs font-bold text-pino">
+          <span className="flex size-5 items-center justify-center rounded-full bg-pino text-xs font-bold text-white group-hover:bg-white group-hover:text-pino">
             {count}
           </span>
         )}
       </button>
 
-      {open && <div className="fixed inset-0 z-40 bg-pino/30" onClick={close} />}
+      {open && <div className="fixed inset-0 z-40 bg-pino/45" onClick={close} aria-hidden="true" />}
 
       <aside
-        className={`fixed top-0 right-0 z-50 flex h-full w-full max-w-sm flex-col bg-cream shadow-2xl transition-transform duration-300 ${
+        role="dialog"
+        aria-modal="true"
+        aria-label={codes ? "Pedido confirmado" : "Tu carrito"}
+        aria-hidden={!open}
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-cream shadow-2xl transition-transform duration-200 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <header className="flex items-center justify-between border-b border-pino/10 bg-white px-4 py-3">
-          <h2 className="font-display text-lg text-pino">{codes ? "Pedido confirmado" : "Tu carrito"}</h2>
-          <button onClick={close} aria-label="Cerrar" className="text-pino/60 hover:text-pino">
+        <header className="flex min-h-16 items-center justify-between border-b border-pino/12 bg-white px-5">
+          <div>
+            <h2 className="text-lg font-bold text-pino">{codes ? "Pedido confirmado" : "Tu carrito"}</h2>
+            {!codes && count > 0 && <p className="text-xs text-pino/72">{count} {count === 1 ? "producto" : "productos"}</p>}
+          </div>
+          <button type="button" onClick={close} aria-label="Cerrar" className="flex size-10 items-center justify-center rounded-lg text-pino/60 hover:bg-pino/5 hover:text-pino">
             <XIcon className="size-5" />
           </button>
         </header>
@@ -97,8 +106,8 @@ export function Cart() {
           <>
             <div className="flex-1 overflow-y-auto p-4">
               <div className="mb-4 text-center">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-hoja/15 text-xl text-hoja">
-                  ✓
+                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-hoja/12 text-hoja">
+                  <CheckCircle2Icon className="size-6" />
                 </div>
                 <p className="mt-3 text-sm text-hoja">
                   {codes.length > 1
@@ -108,7 +117,7 @@ export function Cart() {
               </div>
               <div className="space-y-3">
                 {codes.map((c) => (
-                  <div key={c.code} className="rounded-xl border border-pino/10 bg-white p-3">
+                  <div key={c.code} className="rounded-xl bg-white p-4 ring-1 ring-pino/12">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-pino">{c.storeName}</span>
                       <span className="font-mono text-base font-bold text-pino">{c.code}</span>
@@ -126,7 +135,7 @@ export function Cart() {
           </>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-5">
               {items.length === 0 ? (
                 <p className="py-16 text-center text-hoja">Tu carrito está vacío.</p>
               ) : (
@@ -140,17 +149,19 @@ export function Cart() {
                         {group.items.map((it) => (
                           <div
                             key={it.productId}
-                            className="flex items-center gap-3 rounded-xl border border-pino/10 bg-white p-2"
+                            className="flex items-center gap-3 rounded-lg bg-white p-2.5 ring-1 ring-pino/10"
                           >
                             {it.photoUrl ? (
-                              <img
+                              <Image
                                 src={it.photoUrl}
                                 alt={it.name}
+                                width={48}
+                                height={48}
                                 className="size-12 shrink-0 rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-cream text-lg">
-                                🛒
+                              <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-pino/5 text-pino/35">
+                                <ShoppingCartIcon className="size-5" />
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
@@ -196,31 +207,33 @@ export function Cart() {
             </div>
 
             <footer className="space-y-3 border-t border-pino/10 bg-white p-4">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2" role="group" aria-label="Forma de pago">
                 <button
+                  type="button"
                   onClick={() => setMethod("cashOnPickup")}
-                  className={`rounded-lg border-2 p-2 text-center text-sm transition ${
-                    method === "cashOnPickup" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60"
+                  aria-pressed={method === "cashOnPickup"}
+                  className={`flex min-h-16 items-center justify-center gap-2 rounded-lg p-2 text-center text-sm font-semibold transition-colors ${
+                    method === "cashOnPickup" ? "bg-pino text-white" : "bg-pino/5 text-pino/65 hover:bg-pino/10"
                   }`}
                 >
-                  <div>💵</div>
-                  Efectivo
+                  <BanknoteIcon className="size-5" /> Efectivo
                 </button>
                 <button
+                  type="button"
                   onClick={() => setMethod("cardMock")}
-                  className={`rounded-lg border-2 p-2 text-center text-sm transition ${
-                    method === "cardMock" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60"
+                  aria-pressed={method === "cardMock"}
+                  className={`flex min-h-16 items-center justify-center gap-2 rounded-lg p-2 text-center text-sm font-semibold transition-colors ${
+                    method === "cardMock" ? "bg-pino text-white" : "bg-pino/5 text-pino/65 hover:bg-pino/10"
                   }`}
                 >
-                  <div>💳</div>
-                  Tarjeta
+                  <CreditCardIcon className="size-5" /> Tarjeta
                 </button>
               </div>
               <div className="flex items-center justify-between text-base font-semibold text-pino">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
               </div>
-              <Button onClick={checkout} disabled={busy || items.length === 0} className="w-full bg-pino">
+              <Button onClick={checkout} disabled={busy || items.length === 0} size="lg" className="w-full bg-pino">
                 {busy ? "Procesando…" : "Confirmar pedido"}
               </Button>
             </footer>

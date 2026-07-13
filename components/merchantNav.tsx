@@ -3,20 +3,20 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  LayoutDashboardIcon,
-  PackageIcon,
+  BadgePercentIcon,
   ClipboardListIcon,
+  LayoutDashboardIcon,
+  MenuIcon,
+  PackageIcon,
   PlusIcon,
   RouteIcon,
-  BadgePercentIcon,
   ShoppingBasketIcon,
   TrendingUpIcon,
   TrophyIcon,
-  MenuIcon,
   XIcon,
-  LeafIcon,
   type LucideIcon,
 } from "lucide-react"
+import { BrandMark } from "@/components/brandMark"
 import { StoreSwitcher } from "@/components/storeSwitcher"
 import { SignOutButton } from "@/components/signOutButton"
 import { cn } from "@/lib/utils"
@@ -26,53 +26,38 @@ type NavGroup = { label: string; items: NavItem[] }
 
 const groups: NavGroup[] = [
   {
-    label: "Operación",
+    label: "Trabajo diario",
     items: [
-      { href: "/merchant/boxes", label: "Mis cajas", icon: PackageIcon },
+      { href: "/merchant", label: "Resumen", icon: LayoutDashboardIcon },
+      { href: "/merchant/boxes", label: "Cajas publicadas", icon: PackageIcon },
       { href: "/merchant/reservations", label: "Reservas", icon: ClipboardListIcon },
-      { href: "/merchant/boxes/new", label: "Nueva caja", icon: PlusIcon },
+      { href: "/merchant/trazabilidad", label: "Inventario", icon: RouteIcon },
     ],
   },
   {
-    label: "Análisis",
+    label: "Decisiones",
     items: [
-      { href: "/merchant", label: "Dashboard", icon: LayoutDashboardIcon },
-      { href: "/merchant/trazabilidad", label: "Trazabilidad", icon: RouteIcon },
       { href: "/merchant/ofertas", label: "Ofertas", icon: BadgePercentIcon },
-      { href: "/merchant/cesta", label: "Cesta", icon: ShoppingBasketIcon },
+      { href: "/merchant/cesta", label: "Cestas", icon: ShoppingBasketIcon },
       { href: "/merchant/ventas", label: "Ventas", icon: TrendingUpIcon },
-      { href: "/merchant/ranking", label: "Ranking", icon: TrophyIcon },
+      { href: "/merchant/ranking", label: "Productos", icon: TrophyIcon },
     ],
   },
 ]
 
 function isActive(pathname: string, href: string) {
   if (href === "/merchant") return pathname === "/merchant"
-  if (href === "/merchant/boxes")
-    return pathname === "/merchant/boxes" || (pathname.startsWith("/merchant/boxes/") && pathname !== "/merchant/boxes/new")
+  if (href === "/merchant/boxes") return pathname === href || (pathname.startsWith(`${href}/`) && pathname !== "/merchant/boxes/new")
   return pathname === href || pathname.startsWith(`${href}/`)
-}
-
-function Brand() {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span className="flex size-8 items-center justify-center rounded-lg bg-dorado text-pino">
-        <LeafIcon className="size-[18px]" strokeWidth={2.25} />
-      </span>
-      <span className="font-display text-lg leading-none text-cream">
-        RESCAT <span className="text-cream/45">· Panel</span>
-      </span>
-    </span>
-  )
 }
 
 function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (
-    <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-      {groups.map((group) => (
-        <div key={group.label}>
-          <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-cream/40">{group.label}</p>
-          <ul className="mt-2 space-y-0.5">
+    <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navegación del comercio">
+      {groups.map((group, index) => (
+        <div key={group.label} className={index > 0 ? "mt-7" : ""}>
+          <p className="px-3 text-xs font-semibold text-pino/70">{group.label}</p>
+          <ul className="mt-2 space-y-1">
             {group.items.map((item) => {
               const active = isActive(pathname, item.href)
               const Icon = item.icon
@@ -83,19 +68,12 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
                     aria-current={active ? "page" : undefined}
                     onClick={onNavigate}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
-                      active ? "bg-cream/12 text-cream" : "text-cream/70 hover:bg-cream/6 hover:text-cream"
+                      "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+                      active ? "bg-pino text-white" : "text-pino/75 hover:bg-pino/[0.06] hover:text-pino",
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "size-[18px] shrink-0 transition-colors duration-150",
-                        active ? "text-dorado" : "text-cream/50 group-hover:text-cream/80"
-                      )}
-                      strokeWidth={2}
-                    />
-                    <span>{item.label}</span>
-                    {active && <span className="ml-auto size-1.5 rounded-full bg-dorado" aria-hidden />}
+                    <Icon className={cn("size-[18px] shrink-0", active ? "text-dorado" : "text-pino/48")} strokeWidth={2} />
+                    {item.label}
                   </Link>
                 </li>
               )
@@ -107,19 +85,21 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
   )
 }
 
-function SidebarFooter({ email }: { email: string | null }) {
+function SidebarContent({ stores, email, pathname, onNavigate }: { stores: { id: string; name: string }[]; email: string | null; pathname: string; onNavigate?: () => void }) {
   return (
-    <div className="border-t border-cream/10 p-4">
-      {email && (
-        <div className="mb-3 flex items-center gap-2.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cream/10 font-display text-sm text-cream">
-            {email.charAt(0).toUpperCase()}
-          </span>
-          <span className="min-w-0 truncate text-xs text-cream/60">{email}</span>
-        </div>
-      )}
-      <SignOutButton className="w-full border-cream/20 bg-transparent text-cream hover:bg-cream/10 hover:text-cream" />
-    </div>
+    <>
+      <div className="border-b border-pino/10 px-4 pb-4">
+        <StoreSwitcher stores={stores} />
+        <Link href="/merchant/boxes/new" onClick={onNavigate} className="mt-3 flex min-h-10 items-center justify-center gap-2 rounded-lg bg-dorado px-3 text-sm font-bold text-pino transition-colors hover:bg-pino hover:text-white">
+          <PlusIcon className="size-4" /> Publicar caja
+        </Link>
+      </div>
+      <NavList pathname={pathname} onNavigate={onNavigate} />
+      <div className="border-t border-pino/10 p-4">
+        {email && <p className="mb-3 truncate text-xs text-pino/70">Sesión: {email}</p>}
+        <SignOutButton className="w-full justify-start bg-transparent text-pino/65 ring-1 ring-pino/15 hover:bg-pino/5 hover:text-pino" />
+      </div>
+    </>
   )
 }
 
@@ -129,55 +109,29 @@ export function MerchantNav({ stores, email }: { stores: { id: string; name: str
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-cream/10 bg-pino px-4 lg:hidden">
-        <Brand />
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Abrir menú de navegación"
-          className="flex size-9 items-center justify-center rounded-lg text-cream/80 transition-colors hover:bg-cream/10 hover:text-cream"
-        >
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-pino/12 bg-cream px-4 lg:hidden">
+        <BrandMark href="/merchant" panel />
+        <button type="button" onClick={() => setOpen(true)} aria-label="Abrir menú" className="flex size-10 items-center justify-center rounded-lg text-pino hover:bg-pino/5">
           <MenuIcon className="size-5" />
         </button>
       </header>
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-pino/60 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-            aria-hidden
-          />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col bg-pino text-cream shadow-xl">
-            <div className="flex h-14 items-center justify-between border-b border-cream/10 px-4">
-              <Brand />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Cerrar menú"
-                className="flex size-9 items-center justify-center rounded-lg text-cream/80 transition-colors hover:bg-cream/10 hover:text-cream"
-              >
-                <XIcon className="size-5" />
-              </button>
+          <button className="absolute inset-0 bg-pino/45" onClick={() => setOpen(false)} aria-label="Cerrar menú" />
+          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[86%] flex-col bg-cream shadow-xl">
+            <div className="flex h-16 items-center justify-between px-4">
+              <BrandMark href="/merchant" panel />
+              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar menú" className="flex size-10 items-center justify-center rounded-lg text-pino hover:bg-pino/5"><XIcon className="size-5" /></button>
             </div>
-            <div className="px-4 py-4">
-              <StoreSwitcher stores={stores} />
-            </div>
-            <NavList pathname={pathname} onNavigate={() => setOpen(false)} />
-            <SidebarFooter email={email} />
-          </div>
+            <SidebarContent stores={stores} email={email} pathname={pathname} onNavigate={() => setOpen(false)} />
+          </aside>
         </div>
       )}
 
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-pino text-cream lg:flex">
-        <div className="flex h-16 items-center px-5">
-          <Brand />
-        </div>
-        <div className="px-4 pb-2">
-          <StoreSwitcher stores={stores} />
-        </div>
-        <NavList pathname={pathname} />
-        <SidebarFooter email={email} />
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-pino/12 bg-cream lg:flex">
+        <div className="flex h-20 items-center px-5"><BrandMark href="/merchant" panel /></div>
+        <SidebarContent stores={stores} email={email} pathname={pathname} />
       </aside>
     </>
   )

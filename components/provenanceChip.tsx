@@ -14,10 +14,10 @@ export function ProvenanceChip({
   const initial = storeName.trim().charAt(0).toUpperCase() || "?"
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pino text-xs font-bold text-cream">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-pino/[0.08] text-xs font-bold text-pino">
         {initial}
       </span>
-      <span className="truncate text-sm text-hoja">
+      <span className="truncate text-sm font-medium text-pino/72">
         {storeName}
         {typeof distanceKm === "number" ? ` · a ${distanceLabel(distanceKm)} de ti` : ""}
       </span>

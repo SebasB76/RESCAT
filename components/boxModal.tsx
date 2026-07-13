@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { BoxReserve, type ReserveBox } from "@/components/boxReserve"
@@ -9,9 +9,9 @@ export function BoxModal({ id }: { id: string }) {
   const [box, setBox] = useState<ReserveBox | null>(null)
   const [missing, setMissing] = useState(false)
 
-  function close() {
+  const close = useCallback(() => {
     router.push("/", { scroll: false })
-  }
+  }, [router])
 
   useEffect(() => {
     const supabase = createBrowserClient()
@@ -61,20 +61,23 @@ export function BoxModal({ id }: { id: string }) {
       document.removeEventListener("keydown", onKey)
       document.body.style.overflow = ""
     }
-  }, [])
+  }, [close])
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-pino/50 p-4 backdrop-blur-sm sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Detalle de caja"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-pino/55 p-3 sm:items-center sm:p-6"
       onClick={close}
     >
       <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         {box ? (
           <BoxReserve box={box} onClose={close} />
         ) : missing ? (
-          <div className="rounded-2xl bg-white p-8 text-center text-hoja">No se encontró la caja.</div>
+          <div className="rounded-xl bg-white p-8 text-center text-pino">No se encontró la caja.</div>
         ) : (
-          <div className="h-72 animate-pulse rounded-2xl bg-white/70" />
+          <div className="h-72 animate-pulse rounded-xl bg-white/70" />
         )}
       </div>
     </div>

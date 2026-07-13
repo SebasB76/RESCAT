@@ -32,6 +32,17 @@ function LiftBadge({ lift }: { lift: number }) {
   )
 }
 
+function SortHeader({ label, sortBy, align, active, direction, onSort }: { label: string; sortBy: SortKey; align?: "left" | "center"; active: boolean; direction: SortDir; onSort: (key: SortKey) => void }) {
+  return (
+    <th className={`px-3 py-2 ${align === "center" ? "text-center" : "text-left"}`}>
+      <button type="button" onClick={() => onSort(sortBy)} className={`inline-flex items-center gap-1 font-medium transition ${active ? "text-pino" : "text-pino/70 hover:text-pino"}`}>
+        {label}
+        {active && <span className="text-[0.6rem]">{direction === "asc" ? "▲" : "▼"}</span>}
+      </button>
+    </th>
+  )
+}
+
 export function BasketRules({ rules }: { rules: BasketRule[] }) {
   const [selected, setSelected] = useState("")
   const [search, setSearch] = useState("")
@@ -80,22 +91,6 @@ export function BasketRules({ rules }: { rules: BasketRule[] }) {
       setSortKey(key)
       setSortDir(key === "a" || key === "b" ? "asc" : "desc")
     }
-  }
-
-  function SortHeader({ label, sortBy, align }: { label: string; sortBy: SortKey; align?: "left" | "center" }) {
-    const active = sortKey === sortBy
-    return (
-      <th className={`px-3 py-2 ${align === "center" ? "text-center" : "text-left"}`}>
-        <button
-          type="button"
-          onClick={() => toggleSort(sortBy)}
-          className={`inline-flex items-center gap-1 font-medium transition ${active ? "text-pino" : "text-pino/50 hover:text-pino"}`}
-        >
-          {label}
-          {active && <span className="text-[0.6rem]">{sortDir === "asc" ? "▲" : "▼"}</span>}
-        </button>
-      </th>
-    )
   }
 
   if (!rules.length) {
@@ -177,12 +172,12 @@ export function BasketRules({ rules }: { rules: BasketRule[] }) {
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-pino/10 text-xs uppercase tracking-wide">
-                <SortHeader label="Producto A" sortBy="a" />
-                <SortHeader label="Producto B" sortBy="b" />
-                <SortHeader label="Frecuencia" sortBy="freq" align="center" />
-                <SortHeader label="Conf. A→B" sortBy="confAB" align="center" />
-                <SortHeader label="Conf. B→A" sortBy="confBA" align="center" />
-                <SortHeader label="Lift" sortBy="lift" />
+                <SortHeader label="Producto A" sortBy="a" active={sortKey === "a"} direction={sortDir} onSort={toggleSort} />
+                <SortHeader label="Producto B" sortBy="b" active={sortKey === "b"} direction={sortDir} onSort={toggleSort} />
+                <SortHeader label="Frecuencia" sortBy="freq" align="center" active={sortKey === "freq"} direction={sortDir} onSort={toggleSort} />
+                <SortHeader label="Conf. A→B" sortBy="confAB" align="center" active={sortKey === "confAB"} direction={sortDir} onSort={toggleSort} />
+                <SortHeader label="Conf. B→A" sortBy="confBA" align="center" active={sortKey === "confBA"} direction={sortDir} onSort={toggleSort} />
+                <SortHeader label="Lift" sortBy="lift" active={sortKey === "lift"} direction={sortDir} onSort={toggleSort} />
               </tr>
             </thead>
             <tbody>

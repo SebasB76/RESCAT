@@ -7,28 +7,28 @@ function liftClass(lift: number) {
 }
 
 export function DashboardCombos({ rows }: { rows: ComboRow[] }) {
-  if (!rows.length) return <p className="text-sm text-pino/50">Sin combos de compra detectados.</p>
+  if (!rows.length) return <p className="p-5 text-sm text-pino/72">Sin combos de compra detectados.</p>
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="data-table w-full min-w-[40rem] text-sm">
         <thead>
-          <tr className="border-b border-pino/10 text-left text-xs uppercase tracking-wide text-pino/40">
-            <th className="pb-2 font-medium">Producto A</th>
-            <th className="pb-2 font-medium">Producto B</th>
-            <th className="pb-2 text-center font-medium">Frecuencia</th>
-            <th className="pb-2 text-center font-medium">Conf. A→B</th>
-            <th className="pb-2 text-right font-medium">Lift</th>
+          <tr>
+            <th>Producto inicial</th>
+            <th>Producto asociado</th>
+            <th className="text-center!">Veces</th>
+            <th className="text-center!">Confianza</th>
+            <th className="text-right!">Afinidad</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-pino/10">
           {rows.map((r) => (
             <tr key={r.id}>
-              <td className="py-2 pr-2 font-medium text-pino">{r.a}</td>
-              <td className="py-2 pr-2 font-medium text-pino">{r.b}</td>
-              <td className="py-2 text-center tabular-nums text-pino/70">{r.freq}×</td>
-              <td className="py-2 text-center tabular-nums text-pino/70">{r.confAB}%</td>
-              <td className="py-2 text-right">
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${liftClass(r.lift)}`}>{r.lift.toFixed(2)}</span>
+              <td className="font-semibold text-pino">{r.a}</td>
+              <td className="font-semibold text-pino">{r.b}</td>
+              <td className="text-center tabular-nums text-pino/70">{r.freq}×</td>
+              <td className="text-center tabular-nums text-pino/70">{r.confAB}%</td>
+              <td className="text-right">
+                <span className={`inline-flex rounded-md px-2 py-1 text-xs font-bold ${liftClass(r.lift)}`}>{r.lift.toFixed(2)}</span>
               </td>
             </tr>
           ))}

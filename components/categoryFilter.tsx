@@ -39,7 +39,7 @@ export function CategoryFilter({
   onChange: (category: string) => void
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
       {categories.map((c) => {
         const Icon = CATEGORY_ICONS[c] ?? Tag
         const active = value === c
@@ -49,10 +49,10 @@ export function CategoryFilter({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(c)}
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hoja/40 focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100 ${
+            className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hoja/40 focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
               active
-                ? "border-pino bg-pino text-cream shadow-sm"
-                : "border-pino/15 bg-white text-pino/80 hover:border-hoja/50 hover:text-pino hover:shadow-sm"
+                ? "bg-pino text-white"
+                : "bg-white text-pino/75 ring-1 ring-pino/15 hover:ring-pino/30"
             }`}
           >
             <Icon

@@ -5,6 +5,7 @@ import { DashboardKpis, type DashboardKpi } from "@/components/dashboardKpis"
 import { DashboardChart } from "@/components/dashboardChart"
 import { DashboardAlerts } from "@/components/dashboardAlerts"
 import { DashboardCombos } from "@/components/dashboardCombos"
+import { ArrowRightIcon, PlusIcon } from "lucide-react"
 
 const money = (n: number) => `$${Number(n).toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const count = (n: number) => Number(n).toLocaleString("es-EC")
@@ -68,50 +69,60 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
     }))
 
   const comboRows = (combos ?? []).map((c) => ({ id: c.id, a: c.a, b: c.b, freq: c.freq, confAB: c.confAB, lift: c.lift }))
+  const today = new Intl.DateTimeFormat("es-EC", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Guayaquil" }).format(new Date())
+  const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-pino">Dashboard</h1>
-        <p className="mt-1 text-sm text-hoja">Resumen del inventario y las ventas.</p>
+    <div className="space-y-7">
+      <div className="flex flex-col gap-4 border-b border-pino/12 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-2 text-sm font-medium text-hoja">{todayLabel}</p>
+          <h1 className="text-3xl font-bold tracking-[-0.035em] text-pino">Hoy en tu tienda</h1>
+          <p className="mt-2 text-sm text-pino/72">Inventario, rescates y decisiones pendientes en una sola vista.</p>
+        </div>
+        <Link href="/merchant/boxes/new" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-pino px-4 text-sm font-bold text-white transition-colors hover:bg-hoja">
+          <PlusIcon className="size-4" /> Publicar caja
+        </Link>
       </div>
 
       <DashboardKpis items={kpis} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-pino/10 bg-white p-4">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(19rem,0.65fr)]">
+        <section className="rounded-xl bg-white ring-1 ring-pino/12">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg text-pino">Alertas urgentes</h2>
-              <p className="text-xs text-pino/50">Lotes críticos que caducan pronto.</p>
+            <div className="p-5 pb-3">
+              <h2 className="text-lg font-bold text-pino">Atención inmediata</h2>
+              <p className="mt-1 text-sm text-pino/72">Lotes que caducan en siete días o menos.</p>
             </div>
-            <Link href="/merchant/trazabilidad" className="shrink-0 text-xs font-medium text-hoja hover:text-pino">Ver todos →</Link>
+            <Link href="/merchant/trazabilidad" className="m-5 inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-hoja hover:text-pino">Inventario <ArrowRightIcon className="size-4" /></Link>
           </div>
-          <div className="mt-4">
+          <div className="overflow-hidden border-t border-pino/10">
             <DashboardAlerts rows={alerts} />
           </div>
         </section>
 
-        <section className="rounded-xl border border-pino/10 bg-white p-4">
-          <div>
-            <h2 className="font-display text-lg text-pino">Stock por categoría</h2>
-            <p className="text-xs text-pino/50">Valor en percha por categoría.</p>
+        <section className="rounded-xl bg-white p-5 ring-1 ring-pino/12">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-pino">Valor en percha</h2>
+              <p className="mt-1 text-sm text-pino/72">Distribución por categoría.</p>
+            </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-6">
             <DashboardChart data={categories} max={maxCategory} />
           </div>
         </section>
       </div>
 
-      <section className="rounded-xl border border-pino/10 bg-white p-4">
+      <section className="rounded-xl bg-white ring-1 ring-pino/12">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display text-lg text-pino">Top combos de compra</h2>
-            <p className="text-xs text-pino/50">Análisis de cesta · lift = fuerza de la asociación.</p>
+          <div className="p-5 pb-3">
+            <h2 className="text-lg font-bold text-pino">Productos que salen juntos</h2>
+            <p className="mt-1 text-sm text-pino/72">Oportunidades de combinación basadas en pedidos reales.</p>
           </div>
-          <Link href="/merchant/cesta" className="shrink-0 text-xs font-medium text-hoja hover:text-pino">Ver análisis →</Link>
+          <Link href="/merchant/cesta" className="m-5 inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-hoja hover:text-pino">Ver análisis <ArrowRightIcon className="size-4" /></Link>
         </div>
-        <div className="mt-4">
+        <div className="overflow-hidden border-t border-pino/10">
           <DashboardCombos rows={comboRows} />
         </div>
       </section>

@@ -12,7 +12,7 @@ const pin = L.divIcon({
 
 export default function DiscoveryMap({ boxes, center }: { boxes: DiscoveryBox[]; center: { lat: number; lng: number } }) {
   return (
-    <MapContainer center={[center.lat, center.lng]} zoom={13} className="h-[70vh] w-full rounded-2xl">
+    <MapContainer center={[center.lat, center.lng]} zoom={13} className="h-[70vh] w-full rounded-xl ring-1 ring-pino/15">
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" />
       {boxes.map((b) => (
         <Marker key={b.id} position={[b.lat, b.lng]} icon={pin}>

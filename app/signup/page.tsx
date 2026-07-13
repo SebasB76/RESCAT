@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Loader2Icon, UploadIcon, XIcon, StoreIcon, UserRoundIcon } from "lucide-react"
+import { AuthFrame } from "@/components/authFrame"
 
 const StoreLocationPicker = dynamic(() => import("@/components/storeLocationPicker"), { ssr: false })
 const GYE = { lat: -2.1709, lng: -79.9224 }
@@ -87,21 +88,23 @@ export default function SignupPage() {
   }
 
   return (
-    <main className={`mx-auto px-6 py-12 ${role === "merchant" ? "max-w-xl" : "max-w-sm"}`}>
-      <h1 className="font-display text-3xl sm:text-4xl text-pino">Crear cuenta</h1>
+    <AuthFrame wide={role === "merchant"}>
+      <p className="text-sm font-semibold text-hoja">Únete a la red</p>
+      <h1 className="mt-2 text-3xl font-black tracking-[-0.035em] text-pino">Crear cuenta</h1>
+      <p className="mt-2 text-sm leading-6 text-pino/72">Compra mejor o convierte el excedente de tu tienda en una nueva venta.</p>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => setRole("customer")}
-          className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition ${role === "customer" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60 hover:border-pino/30"}`}
+          className={`flex min-h-12 items-center justify-center gap-2 rounded-lg p-3 text-sm font-semibold transition-colors ${role === "customer" ? "bg-pino text-white" : "bg-white text-pino/60 ring-1 ring-pino/15 hover:ring-pino/30"}`}
         >
           <UserRoundIcon className="size-4" /> Soy Rescatista
         </button>
         <button
           type="button"
           onClick={() => setRole("merchant")}
-          className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 text-sm font-medium transition ${role === "merchant" ? "border-hoja bg-hoja/10 text-pino" : "border-pino/15 text-pino/60 hover:border-pino/30"}`}
+          className={`flex min-h-12 items-center justify-center gap-2 rounded-lg p-3 text-sm font-semibold transition-colors ${role === "merchant" ? "bg-pino text-white" : "bg-white text-pino/60 ring-1 ring-pino/15 hover:ring-pino/30"}`}
         >
           <StoreIcon className="size-4" /> Soy tienda
         </button>
@@ -118,8 +121,8 @@ export default function SignupPage() {
         <div><Label>Teléfono {role === "merchant" ? "" : "(opcional)"}</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" inputMode="tel" placeholder="09xxxxxxxx" /></div>
 
         {role === "merchant" && (
-          <div className="space-y-3 rounded-xl border border-pino/10 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-pino/50">Datos de la tienda</p>
+          <div className="space-y-4 border-t border-pino/15 pt-5">
+            <p className="text-sm font-bold text-pino">Datos de la tienda</p>
             <div><Label>Nombre de la tienda</Label><Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Mini Market Juanita" required /></div>
             <div><Label>Dirección</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Urdesa Central, Guayaquil" required /></div>
             <div><Label>Barrio / sector</Label><Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Urdesa" /></div>
@@ -156,6 +159,6 @@ export default function SignupPage() {
           {busy ? <><Loader2Icon className="size-4 animate-spin" /> Creando…</> : role === "merchant" ? "Registrar mi tienda" : "Registrarme"}
         </Button>
       </form>
-    </main>
+    </AuthFrame>
   )
 }

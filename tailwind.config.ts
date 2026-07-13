@@ -5,15 +5,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#F6EFDD",
-        pino: "#123B29",
-        hoja: "#4C7028",
-        dorado: "#E5A11C",
-        terracota: "#CE5228",
+        cream: "oklch(0.975 0.004 145)",
+        pino: "oklch(0.255 0.055 155)",
+        hoja: "oklch(0.47 0.12 153)",
+        dorado: "oklch(0.91 0.19 112)",
+        terracota: "oklch(0.61 0.19 32)",
       },
       fontFamily: {
-        display: ["var(--font-fraunces)", "serif"],
-        body: ["var(--font-hanken)", "sans-serif"],
+        display: ["ui-sans-serif", "system-ui", "sans-serif"],
+        body: ["ui-sans-serif", "system-ui", "sans-serif"],
       },
     },
   },

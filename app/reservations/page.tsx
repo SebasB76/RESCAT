@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { ReviewForm } from "@/components/reviewForm"
 import { money, statusLabel } from "@/lib/format"
+import { BrandMark } from "@/components/brandMark"
 
 export default async function MyOrders({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
   const { code } = await searchParams
@@ -29,10 +30,14 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
   const rows = [...resRows, ...purRows].sort((a, b) => (a.date < b.date ? 1 : -1))
 
   return (
-    <main className="mx-auto min-h-dvh max-w-2xl px-4 py-8 sm:px-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-pino">Mis pedidos</h1>
-        <Link href="/" className="text-sm text-pino hover:text-hoja">← Tienda</Link>
+    <main className="mx-auto min-h-dvh max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+      <BrandMark />
+      <div className="mt-10 flex items-end justify-between border-b border-pino/15 pb-5">
+        <div>
+          <h1 className="text-3xl font-black tracking-[-0.035em] text-pino">Mis pedidos</h1>
+          <p className="mt-1 text-sm text-pino/72">Códigos, estado y reseñas de tus rescates.</p>
+        </div>
+        <Link href="/" className="text-sm font-semibold text-hoja hover:text-pino">Seguir comprando</Link>
       </div>
       {code && (
         <p className="mt-3 rounded-lg bg-hoja/10 p-3 text-sm text-pino">
@@ -41,10 +46,10 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
       )}
       <div className="mt-6 space-y-3">
         {rows.map((r) => (
-          <div key={r.id} className="rounded-xl border border-pino/10 bg-white p-4">
+          <div key={r.id} className="rounded-xl bg-white p-4 ring-1 ring-pino/12">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <span className="rounded-full bg-cream px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-pino/60 uppercase">{r.kind}</span>
+                <span className="rounded-md bg-pino/[0.06] px-2 py-1 text-xs font-semibold text-pino/60">{r.kind}</span>
                 <p className="mt-1 font-medium text-pino">{r.title}</p>
               </div>
               <span className="shrink-0 font-mono text-sm text-pino">{r.code}</span>

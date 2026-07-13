@@ -8,9 +8,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-hanken);
-  --font-mono: ui-monospace, monospace;
-  --font-heading: var(--font-fraunces);
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-heading: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -50,38 +50,38 @@
 }
 
 :root {
-  --background: #f6efdd;
-  --foreground: #123b29;
-  --card: #ffffff;
-  --card-foreground: #123b29;
-  --popover: #ffffff;
-  --popover-foreground: #123b29;
-  --primary: #123b29;
-  --primary-foreground: #f6efdd;
-  --secondary: #eae1cb;
-  --secondary-foreground: #123b29;
-  --muted: #eae1cb;
-  --muted-foreground: #4c7028;
-  --accent: #f0e4c4;
-  --accent-foreground: #123b29;
-  --destructive: #ce5228;
-  --border: #123b291a;
-  --input: #123b2926;
-  --ring: #5e8a31;
-  --chart-1: #5e8a31;
-  --chart-2: #e5a11c;
-  --chart-3: #ce5228;
-  --chart-4: #123b29;
-  --chart-5: #241e15;
-  --radius: 0.625rem;
-  --sidebar: #123b29;
-  --sidebar-foreground: #f6efdd;
-  --sidebar-primary: #e5a11c;
-  --sidebar-primary-foreground: #123b29;
-  --sidebar-accent: #1c4f38;
-  --sidebar-accent-foreground: #f6efdd;
-  --sidebar-border: #ffffff1a;
-  --sidebar-ring: #5e8a31;
+  --background: oklch(0.975 0.004 145);
+  --foreground: oklch(0.255 0.055 155);
+  --card: oklch(0.998 0 0);
+  --card-foreground: oklch(0.255 0.055 155);
+  --popover: oklch(0.998 0 0);
+  --popover-foreground: oklch(0.255 0.055 155);
+  --primary: oklch(0.255 0.055 155);
+  --primary-foreground: oklch(0.985 0.003 145);
+  --secondary: oklch(0.935 0.013 145);
+  --secondary-foreground: oklch(0.255 0.055 155);
+  --muted: oklch(0.94 0.009 145);
+  --muted-foreground: oklch(0.43 0.045 155);
+  --accent: oklch(0.91 0.19 112);
+  --accent-foreground: oklch(0.22 0.045 150);
+  --destructive: oklch(0.61 0.19 32);
+  --border: oklch(0.255 0.035 155 / 16%);
+  --input: oklch(0.255 0.035 155 / 23%);
+  --ring: oklch(0.47 0.12 153);
+  --chart-1: oklch(0.47 0.12 153);
+  --chart-2: oklch(0.91 0.19 112);
+  --chart-3: oklch(0.61 0.19 32);
+  --chart-4: oklch(0.255 0.055 155);
+  --chart-5: oklch(0.64 0.07 220);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.955 0.008 145);
+  --sidebar-foreground: oklch(0.255 0.055 155);
+  --sidebar-primary: oklch(0.255 0.055 155);
+  --sidebar-primary-foreground: oklch(0.985 0.003 145);
+  --sidebar-accent: oklch(0.91 0.19 112);
+  --sidebar-accent-foreground: oklch(0.22 0.045 150);
+  --sidebar-border: oklch(0.255 0.035 155 / 14%);
+  --sidebar-ring: oklch(0.47 0.12 153);
 }
 
 .dark {
@@ -124,8 +124,68 @@
   }
   body {
     @apply bg-background text-foreground;
+    min-width: 320px;
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.025em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: oklch(0.91 0.19 112);
+    color: oklch(0.22 0.045 150);
+  }
+  :focus-visible {
+    outline: 2px solid oklch(0.47 0.12 153);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .product-shell {
+    @apply mx-auto w-full max-w-[78rem] px-4 sm:px-6 lg:px-8;
+  }
+
+  .panel {
+    @apply rounded-xl bg-white ring-1 ring-pino/12;
+  }
+
+  .section-title {
+    @apply text-2xl font-semibold leading-tight text-pino sm:text-3xl;
+  }
+
+  .meta-label {
+    @apply text-xs font-medium text-pino/60;
+  }
+
+  .data-table thead {
+    @apply bg-pino/[0.035] text-pino/65;
+  }
+
+  .data-table th {
+    @apply px-3 py-2.5 text-left text-xs font-medium normal-case tracking-normal;
+  }
+
+  .data-table td {
+    @apply px-3 py-3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
