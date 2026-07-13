@@ -34,3 +34,6 @@ playwright/.cache/
 
 # gstack tooling
 .gstack/
+
+# fotos fuente de productos (ya viven en Supabase Storage)
+public/productos/
