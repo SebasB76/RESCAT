@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "RESCAT — Rescata comida. Ahorra. Cuida el planeta.",
+  title: "RESCAT — Rescata productos. Ahorra. Cuida el planeta.",
   description: "Cajas sorpresa de tiendas de barrio en Guayaquil a precio rescate.",
 }
 

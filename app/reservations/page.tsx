@@ -63,7 +63,7 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
         <div className="border-t border-white/12 p-4 sm:border-l sm:border-t-0 sm:p-5">
           <dt className="flex items-center gap-2 text-sm font-semibold text-dorado"><LeafIcon className="size-4" /> Impacto evitado</dt>
           <dd className="mt-2 text-2xl font-black tabular-nums">{avoidedCo2.toFixed(1)} kg CO₂</dd>
-          <p className="mt-1 text-xs text-white/70">~{savedFood.toFixed(1)} kg de comida</p>
+          <p className="mt-1 text-xs text-white/70">~{savedFood.toFixed(1)} kg de alimentos</p>
         </div>
       </dl>
       <div className="mt-6 space-y-3">

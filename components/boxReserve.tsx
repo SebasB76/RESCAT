@@ -162,7 +162,7 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
               {off > 0 && <span className="mt-1 inline-block rounded-full bg-terracota/15 px-2 py-0.5 text-xs font-bold text-terracota">-{off}%</span>}
             </div>
           </div>
-          <p className="text-xs text-hoja">Al rescatar esta caja salvas ~{foodKgSaved(box.tipo)} kg de comida y evitas {co2KgSaved(box.tipo)} kg de CO₂ (estimado).</p>
+          <p className="text-xs text-hoja">Al rescatar esta caja salvas ~{foodKgSaved(box.tipo)} kg de alimentos y evitas {co2KgSaved(box.tipo)} kg de CO₂ (estimado).</p>
 
           {authRequired ? (
             <div>

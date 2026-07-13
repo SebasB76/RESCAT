@@ -49,7 +49,7 @@ export function HeroStats({
           </p>
 
           <h1 className="mt-5 max-w-[12ch] text-5xl font-black leading-[0.94] tracking-[-0.04em] text-white sm:text-6xl lg:text-[4.6rem]">
-            Cajas con comida buena. A precio de rescate.
+            Cajas con buenos productos. A precio de rescate.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-white/78 sm:text-lg">
             Cada caja reúne productos de una tienda local a un precio especial. Reserva la tuya, recógela y paga al retirar.
