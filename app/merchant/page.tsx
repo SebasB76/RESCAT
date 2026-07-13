@@ -5,7 +5,7 @@ import { DashboardKpis, type DashboardKpi } from "@/components/dashboardKpis"
 import { DashboardChart } from "@/components/dashboardChart"
 import { DashboardAlerts } from "@/components/dashboardAlerts"
 import { DashboardCombos } from "@/components/dashboardCombos"
-import { ArrowRightIcon, PlusIcon } from "lucide-react"
+import { ArrowRightIcon, BanknoteIcon, CheckCircle2Icon, Clock3Icon, PercentIcon, PlusIcon } from "lucide-react"
 
 const money = (n: number) => `$${Number(n).toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const count = (n: number) => Number(n).toLocaleString("es-EC")
@@ -23,12 +23,13 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
   const comboScoped = storeId ? comboQuery.eq("storeId", storeId) : comboQuery.is("storeId", null)
   const comboReq = comboScoped.order("lift", { ascending: false }).limit(5)
 
-  const [{ data: stores }, { data: kpiRows }, { data: lots }, { data: salesRows }, { data: combos }] = await Promise.all([
+  const [{ data: stores }, { data: kpiRows }, { data: lots }, { data: salesRows }, { data: combos }, { data: reservationRows }] = await Promise.all([
     supabase.from("store").select("id, name").eq("ownerId", user?.id ?? ""),
     supabase.rpc("inventory_kpis", { p_store: storeId }),
     supabase.rpc("lots_with_level", { p_store: storeId }),
     salesReq,
     comboReq,
+    supabase.rpc("store_reservations"),
   ])
 
   const storeNames = new Map((stores ?? []).map((s): [string, string] => [s.id, s.name]))
@@ -69,6 +70,12 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
     }))
 
   const comboRows = (combos ?? []).map((c) => ({ id: c.id, a: c.a, b: c.b, freq: c.freq, confAB: c.confAB, lift: c.lift }))
+  const scopedReservations = (reservationRows ?? []).filter((reservation) => !storeId || reservation.storeId === storeId)
+  const pickedUpBoxes = scopedReservations.filter((reservation) => reservation.status === "pickedUp")
+  const pendingBoxes = scopedReservations.filter((reservation) => reservation.status === "reserved" || reservation.status === "paid")
+  const closedBoxes = scopedReservations.filter((reservation) => ["pickedUp", "expired", "cancelled"].includes(reservation.status))
+  const boxRevenue = pickedUpBoxes.reduce((sum, reservation) => sum + Number(reservation.amount), 0)
+  const pickupRate = closedBoxes.length ? Math.round((pickedUpBoxes.length / closedBoxes.length) * 100) : 0
   const today = new Intl.DateTimeFormat("es-EC", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Guayaquil" }).format(new Date())
   const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
@@ -86,6 +93,19 @@ export default async function MerchantDashboard({ searchParams }: { searchParams
       </div>
 
       <DashboardKpis items={kpis} />
+
+      <section className="overflow-hidden rounded-xl bg-pino text-white">
+        <div className="flex flex-col gap-2 border-b border-white/12 p-5 sm:flex-row sm:items-end sm:justify-between">
+          <div><h2 className="text-lg font-bold text-white">Rendimiento de tus cajas</h2><p className="mt-1 text-sm text-white/72">Qué ocurre después de publicar: reservas, retiros e ingreso confirmado.</p></div>
+          <Link href="/merchant/reservations" className="inline-flex items-center gap-1 text-sm font-semibold text-dorado hover:text-white">Ver reservas <ArrowRightIcon className="size-4" /></Link>
+        </div>
+        <dl className="grid grid-cols-2 sm:grid-cols-4">
+          <div className="p-4 sm:p-5"><dt className="flex items-center gap-2 text-sm font-semibold text-dorado"><CheckCircle2Icon className="size-4" /> Retiradas</dt><dd className="mt-2 text-2xl font-black tabular-nums">{pickedUpBoxes.length}</dd></div>
+          <div className="border-l border-white/12 p-4 sm:p-5"><dt className="flex items-center gap-2 text-sm font-semibold text-dorado"><Clock3Icon className="size-4" /> Por retirar</dt><dd className="mt-2 text-2xl font-black tabular-nums">{pendingBoxes.length}</dd></div>
+          <div className="border-t border-white/12 p-4 sm:border-l sm:border-t-0 sm:p-5"><dt className="flex items-center gap-2 text-sm font-semibold text-dorado"><BanknoteIcon className="size-4" /> Ingreso cajas</dt><dd className="mt-2 text-2xl font-black tabular-nums">{money(boxRevenue)}</dd></div>
+          <div className="border-l border-t border-white/12 p-4 sm:border-t-0 sm:p-5"><dt className="flex items-center gap-2 text-sm font-semibold text-dorado"><PercentIcon className="size-4" /> Tasa de retiro</dt><dd className="mt-2 text-2xl font-black tabular-nums">{pickupRate}%</dd></div>
+        </dl>
+      </section>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(19rem,0.65fr)]">
         <section className="rounded-xl bg-white ring-1 ring-pino/12">

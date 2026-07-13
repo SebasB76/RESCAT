@@ -8,15 +8,17 @@ import { BrandMark } from "@/components/brandMark"
 export default async function BoxDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createServerClient()
-  const { data: box } = await supabase.from("box").select("*, store(id,name,neighborhood)").eq("id", id).single()
+  const { data: box } = await supabase.from("box").select("*, store(id,name,neighborhood,address,pickupInfo)").eq("id", id).single()
   if (!box) notFound()
-  const store = box.store as { id: string; name: string; neighborhood: string | null }
+  const store = box.store as { id: string; name: string; neighborhood: string | null; address: string; pickupInfo: string | null }
 
-  const [{ data: reviews }, { data: contents }] = await Promise.all([
+  const [{ data: reviews }, { data: contents }, { data: { user } }] = await Promise.all([
     supabase.from("review").select("rating,comment,createdAt").eq("boxId", id).order("createdAt", { ascending: false }).limit(10),
     supabase.from("box_item").select("qty, product(name, brand, price)").eq("boxId", id),
+    supabase.auth.getUser(),
   ])
   const avg = reviews?.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "—"
+  const rating = reviews?.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0
 
   const items = ((contents ?? [])
     .map((c) => {
@@ -30,6 +32,7 @@ export default async function BoxDetail({ params }: { params: Promise<{ id: stri
     id: box.id,
     title: box.title,
     description: box.description,
+    category: box.category,
     items: box.items ?? [],
     price: box.price,
     originalPrice: box.originalPrice,
@@ -40,6 +43,10 @@ export default async function BoxDetail({ params }: { params: Promise<{ id: stri
     tipo: box.tipo,
     storeName: store.name,
     neighborhood: store.neighborhood,
+    address: store.address,
+    pickupInfo: store.pickupInfo,
+    rating,
+    reviewCount: reviews?.length ?? 0,
     stockQty: box.stockQty,
     status: box.status,
   }
@@ -50,7 +57,7 @@ export default async function BoxDetail({ params }: { params: Promise<{ id: stri
         <BrandMark />
         <Link href="/" className="text-sm font-semibold text-hoja hover:text-pino">Volver a la tienda</Link>
       </div>
-      <BoxReserve box={detail} />
+      <BoxReserve box={detail} signedIn={Boolean(user)} />
 
       {items.length > 0 && (
         <section className="mt-6">

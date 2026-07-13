@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import { config } from "dotenv"
-import { imageSlugFor, boxImageSlug, photoUrlFor } from "./catalogImages"
+import { boxImagePath, imageSlugFor, photoUrlFor } from "./catalogImages"
 config({ path: ".env.local" })
 
 const base = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -8,7 +8,7 @@ const admin = createClient(base, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const ZERO = "00000000-0000-0000-0000-000000000000"
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-type RealProduct = { name: string; brand: string | null; category: string; price: number; expiryDays: number; qty: number }
+type RealProduct = { name: string; brand: string | null; category: string; price: number; expiryDays: number; qty: number; promotion?: string }
 
 const CATALOG: RealProduct[] = [
   { name: "Sal 2kg", brand: null, category: "Abarrotes", price: 0.80, expiryDays: 40, qty: 20 },
@@ -21,7 +21,7 @@ const CATALOG: RealProduct[] = [
   { name: "Atún Real 160g", brand: "Real", category: "Enlatados", price: 1.25, expiryDays: 2, qty: 18 },
   { name: "Atún Isabel 160g", brand: "Isabel", category: "Enlatados", price: 1.25, expiryDays: 6, qty: 16 },
   { name: "Atún Va vamos 160g", brand: "Va vamos", category: "Enlatados", price: 1.35, expiryDays: 12, qty: 14 },
-  { name: "Atún D'Gussto 140g", brand: "D'Gussto", category: "Enlatados", price: 1.00, expiryDays: 5, qty: 22 },
+  { name: "Atún D'Gussto 140g", brand: "D'Gussto", category: "Enlatados", price: 1.00, expiryDays: 5, qty: 22, promotion: "Promo: 3 por $2.50" },
   { name: "Sardina Real 156g", brand: "Real", category: "Enlatados", price: 0.90, expiryDays: 15, qty: 18 },
   { name: "Sardina Real 425g", brand: "Real", category: "Enlatados", price: 1.75, expiryDays: 18, qty: 10 },
   { name: "Aceite Favorita 1lt", brand: "Favorita", category: "Aceites", price: 2.50, expiryDays: 3, qty: 12 },
@@ -80,14 +80,90 @@ function check(label: string, error: unknown) {
 function dateInDays(n: number) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10) }
 function inDays(n: number) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString() }
 
+async function syncCatalog(stores: { id: string; name: string }[]) {
+  const productRows = stores.flatMap((store) =>
+    CATALOG.map((product) => {
+      const slug = imageSlugFor(product.name)
+      return {
+        storeId: store.id,
+        name: product.name,
+        brand: product.brand,
+        category: product.category,
+        subcategory: product.promotion ?? null,
+        cost: round2(product.price * 0.8),
+        price: product.price,
+        photoUrl: slug ? photoUrlFor(base, slug) : null,
+      }
+    }),
+  )
+  const { data: products, error: productError } = await admin
+    .from("product")
+    .upsert(productRows, { onConflict: "storeId,name" })
+    .select("id,storeId,name")
+  check("sync products", productError)
+
+  const storeIds = stores.map((store) => store.id)
+  const { data: existingLots, error: lotsError } = await admin.from("lot").select("id,productId,storeId").in("storeId", storeIds)
+  check("load lots", lotsError)
+  const lotIdByProduct = new Map((existingLots ?? []).map((lot) => [`${lot.storeId}|${lot.productId}`, lot.id]))
+  const catalogByName = new Map(CATALOG.map((product) => [product.name, product]))
+  const lotRows = (products ?? []).map((product) => {
+    const catalogProduct = catalogByName.get(product.name)!
+    const existingId = lotIdByProduct.get(`${product.storeId}|${product.id}`)
+    return {
+      ...(existingId ? { id: existingId } : {}),
+      productId: product.id,
+      storeId: product.storeId,
+      qty: catalogProduct.qty,
+      unitCost: round2(catalogProduct.price * 0.8),
+      price: catalogProduct.price,
+      expiryDate: dateInDays(catalogProduct.expiryDays),
+    }
+  })
+  const lotsToUpdate = lotRows.filter((lot) => "id" in lot)
+  const lotsToInsert = lotRows.filter((lot) => !("id" in lot))
+  if (lotsToUpdate.length) check("sync existing lots", (await admin.from("lot").upsert(lotsToUpdate)).error)
+  if (lotsToInsert.length) check("insert missing lots", (await admin.from("lot").insert(lotsToInsert)).error)
+
+  let boxCovers = 0
+  for (const store of stores) {
+    for (const box of BOXES) {
+      const photoUrl = boxImagePath(box.title)
+      if (!photoUrl) continue
+      const { data, error } = await admin
+        .from("box")
+        .update({ photoUrl })
+        .eq("storeId", store.id)
+        .eq("title", box.title)
+        .select("id")
+      check(`sync cover ${box.title} @ ${store.name}`, error)
+      boxCovers += data?.length ?? 0
+    }
+  }
+
+  console.log(`catalog sync done · ${products?.length ?? 0} products · ${lotRows.length} lots · ${boxCovers} box covers · reservations and reviews preserved`)
+}
+
 async function main() {
   const { data: stores, error: sErr } = await admin.from("store").select("id,name").order("createdAt")
   check("load stores", sErr)
   if (!stores?.length) { console.error("no stores found; run `npx tsx supabase/seed.ts` first"); process.exit(1) }
 
-  const { data: custProfiles } = await admin.from("profile").select("id").eq("role", "customer").order("createdAt").limit(1)
-  const customerId = custProfiles?.[0]?.id ?? null
+  const { data: authUsers, error: usersError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 })
+  check("load demo customer", usersError)
+  let customerId = authUsers.users.find((user) => user.email === "cliente@rescat.ec")?.id ?? null
+  if (!customerId) {
+    const { data: customerProfiles } = await admin.from("profile").select("id").eq("role", "customer").order("createdAt").limit(1)
+    customerId = customerProfiles?.[0]?.id ?? null
+  }
   if (customerId) await admin.from("profile").update({ fullName: "Carlos Vera", phone: "0991234567" }).eq("id", customerId)
+
+  if (process.argv.includes("--catalog-only")) {
+    const catalogStores = stores.filter((store) => store.name === "Mini Market Juanita" || store.name === "Despensa Doña María")
+    if (!catalogStores.length) { console.error("no real catalog stores found"); process.exit(1) }
+    await syncCatalog(catalogStores)
+    return
+  }
 
   check("clear review", (await admin.from("review").delete().neq("id", ZERO)).error)
   check("clear reservation", (await admin.from("reservation").delete().neq("id", ZERO)).error)
@@ -99,7 +175,7 @@ async function main() {
   const productRows = stores.flatMap((s) =>
     CATALOG.map((p) => {
       const slug = imageSlugFor(p.name)
-      return { storeId: s.id, name: p.name, brand: p.brand, category: p.category, cost: round2(p.price * 0.8), price: p.price, photoUrl: slug ? photoUrlFor(base, slug) : null }
+      return { storeId: s.id, name: p.name, brand: p.brand, category: p.category, subcategory: p.promotion ?? null, cost: round2(p.price * 0.8), price: p.price, photoUrl: slug ? photoUrlFor(base, slug) : null }
     })
   )
   const { data: products, error: pErr } = await admin.from("product").insert(productRows).select("id,storeId,name")
@@ -123,11 +199,11 @@ async function main() {
     for (const b of BOXES) {
       const orig = round2(b.items.reduce((sum, n) => sum + (priceByName.get(n) ?? 0), 0))
       const price = round2(orig * 0.5)
-      const boxSlug = boxImageSlug(b.title)
+      const boxPhoto = boxImagePath(b.title)
       const { data: box, error: bErr } = await admin.from("box").insert({
         storeId: s.id, title: b.title, description: b.description, items: b.items, category: b.category,
         originalPrice: orig, price, stockQty: b.stock, bestBefore: dateInDays(b.bestBeforeDays),
-        pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: boxSlug ? photoUrlFor(base, boxSlug) : null, status: "active", tipo: b.tipo,
+        pickupStart: inDays(0), pickupEnd: inDays(1), photoUrl: boxPhoto, status: "active", tipo: b.tipo,
       }).select("id").single()
       check(`insert box ${b.title} @ ${s.name}`, bErr)
       boxCount++

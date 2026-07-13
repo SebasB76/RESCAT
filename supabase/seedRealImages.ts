@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import { config } from "dotenv"
-import { imageSlugFor, boxImageSlug, photoUrlFor } from "./catalogImages"
+import { boxImagePath, imageSlugFor, photoUrlFor } from "./catalogImages"
 config({ path: ".env.local" })
 
 const base = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -20,9 +20,9 @@ async function main() {
   const { data: boxes } = await admin.from("box").select("id,title")
   let bn = 0
   for (const b of boxes ?? []) {
-    const slug = boxImageSlug(b.title)
-    if (!slug) continue
-    const { error } = await admin.from("box").update({ photoUrl: photoUrlFor(base, slug) }).eq("id", b.id)
+    const photoUrl = boxImagePath(b.title)
+    if (!photoUrl) continue
+    const { error } = await admin.from("box").update({ photoUrl }).eq("id", b.id)
     if (!error) bn++
   }
 

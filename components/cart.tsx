@@ -1,6 +1,5 @@
 "use client"
 import { useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { toast } from "sonner"
 import { BanknoteIcon, CheckCircle2Icon, CreditCardIcon, MinusIcon, PlusIcon, ShoppingCartIcon, Trash2Icon, XIcon } from "lucide-react"
@@ -8,17 +7,18 @@ import { useCart, type CartItem } from "@/components/cartProvider"
 import { createOrder, type OrderResult } from "@/actions/orders"
 import { type PaymentMethod } from "@/lib/payment"
 import { Button } from "@/components/ui/button"
+import { AuthPrompt } from "@/components/authPrompt"
 
 type ConfirmedOrder = OrderResult & { storeName: string }
 
 type StoreGroup = { storeId: string; storeName: string; items: CartItem[] }
 
-export function Cart() {
+export function Cart({ signedIn }: { signedIn: boolean | null }) {
   const { items, count, total, open, setOpen, removeItem, setQty, clear } = useCart()
-  const router = useRouter()
   const [method, setMethod] = useState<PaymentMethod>("cashOnPickup")
   const [busy, setBusy] = useState(false)
   const [codes, setCodes] = useState<ConfirmedOrder[] | null>(null)
+  const [authRequired, setAuthRequired] = useState(false)
 
   const groups = useMemo<StoreGroup[]>(() => {
     const map = new Map<string, StoreGroup>()
@@ -32,18 +32,26 @@ export function Cart() {
 
   function close() {
     if (codes) reset()
-    else setOpen(false)
+    else {
+      setAuthRequired(false)
+      setOpen(false)
+    }
   }
 
   function reset() {
     setCodes(null)
     setBusy(false)
     setMethod("cashOnPickup")
+    setAuthRequired(false)
     setOpen(false)
   }
 
   async function checkout() {
     if (!items.length) return
+    if (signedIn === false) {
+      setAuthRequired(true)
+      return
+    }
     setBusy(true)
     const names = new Map<string, string>(items.map((i): [string, string] => [i.storeId, i.storeName]))
     try {
@@ -56,7 +64,8 @@ export function Cart() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : ""
       if (msg === "not_authenticated") {
-        router.push("/login?next=/catalogo")
+        setAuthRequired(true)
+        setBusy(false)
         return
       }
       toast.error(msg === "payment_failed" ? "El pago no se pudo procesar" : "No se pudo completar el pedido")
@@ -133,6 +142,17 @@ export function Cart() {
               </Button>
             </footer>
           </>
+        ) : authRequired ? (
+          <div className="flex flex-1 flex-col justify-center overflow-y-auto p-5">
+            <AuthPrompt
+              next="/?cart=open"
+              title="Entra para completar tu pedido"
+              description="Tu carrito ya está armado. Entra para generar los códigos de retiro de cada tienda."
+            />
+            <Button type="button" variant="ghost" onClick={() => setAuthRequired(false)} className="mt-2 w-full text-pino/70">
+              Volver al carrito
+            </Button>
+          </div>
         ) : (
           <>
               <div className="flex-1 overflow-y-auto p-5">

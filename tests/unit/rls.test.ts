@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest"
+import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { createClient } from "@supabase/supabase-js"
 import { config } from "dotenv"
 config({ path: ".env.local" })
@@ -15,17 +15,30 @@ async function signedIn(email: string, password: string) {
 
 describe("RLS", () => {
   let victimBoxId: string
+  let victimStoreId: string
+  let victimUserId: string
+  let intruderUserId: string
   const pw = "rls12345"
   const intruderEmail = `intruder${Date.now()}@t.co`
 
   beforeAll(async () => {
     const victim = await admin.auth.admin.createUser({ email: `victim${Date.now()}@t.co`, password: pw, email_confirm: true })
+    victimUserId = victim.data.user!.id
     await admin.from("profile").update({ role: "merchant" }).eq("id", victim.data.user!.id)
     const { data: store } = await admin.from("store").insert({ ownerId: victim.data.user!.id, name: "V", address: "x", lat: -2.1, lng: -79.9 }).select().single()
+    victimStoreId = store!.id
     const { data: box } = await admin.from("box").insert({ storeId: store!.id, title: "V", originalPrice: 2, price: 1, stockQty: 5, pickupStart: new Date().toISOString(), pickupEnd: new Date(Date.now() + 3600e3).toISOString() }).select().single()
     victimBoxId = box!.id
     const intruder = await admin.auth.admin.createUser({ email: intruderEmail, password: pw, email_confirm: true })
+    intruderUserId = intruder.data.user!.id
     await admin.from("profile").update({ role: "merchant" }).eq("id", intruder.data.user!.id)
+  })
+
+  afterAll(async () => {
+    if (victimBoxId) await admin.from("box").delete().eq("id", victimBoxId)
+    if (victimStoreId) await admin.from("store").delete().eq("id", victimStoreId)
+    if (victimUserId) await admin.auth.admin.deleteUser(victimUserId)
+    if (intruderUserId) await admin.auth.admin.deleteUser(intruderUserId)
   })
 
   it("a merchant cannot update another store's box", async () => {

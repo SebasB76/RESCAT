@@ -22,7 +22,7 @@ export default async function EditBoxPage({ params }: { params: Promise<{ id: st
     await updateBox(id, input)
   }
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <Link href="/merchant/boxes" className="inline-flex items-center gap-1.5 text-sm font-medium text-hoja transition-colors hover:text-pino">
         <ArrowLeftIcon className="size-4" />
         Mis cajas
@@ -33,7 +33,7 @@ export default async function EditBoxPage({ params }: { params: Promise<{ id: st
         <BoxForm
           initial={{
             title: b.title, description: b.description ?? "", items: (b.items ?? []).join("\n"),
-            category: b.category ?? "", originalPrice: String(b.originalPrice), price: String(b.price),
+            category: b.category ?? "", tipo: b.tipo, originalPrice: String(b.originalPrice), price: String(b.price),
             stockQty: String(b.stockQty), bestBefore: b.bestBefore ?? "",
             pickupStart: b.pickupStart.slice(0, 16), pickupEnd: b.pickupEnd.slice(0, 16), photoUrl: b.photoUrl,
           }}

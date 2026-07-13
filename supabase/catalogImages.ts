@@ -17,10 +17,10 @@ export function imageSlugFor(name: string): string | null {
   return null
 }
 
-export function boxImageSlug(title: string): string | null {
+export function boxImagePath(title: string): string | null {
   const t = title.toLowerCase()
-  if (t.includes("desayuno")) return "pan-de-molde-blanco"
-  if (t.includes("despensa")) return "aceite-de-girasol-1l"
+  if (t.includes("desayuno")) return "/cajas/caja-desayuno.webp"
+  if (t.includes("despensa")) return "/cajas/caja-despensa.webp"
   return null
 }
 

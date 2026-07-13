@@ -7,8 +7,31 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SU
 const ZERO = "00000000-0000-0000-0000-000000000000"
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-function loadConsts(path: string): Record<string, any> {
-  const out: Record<string, any> = {}
+type LegacyCatalogProduct = {
+  prod: string; marca: string | null; cat: string; subcat: string | null
+  costo: number; precio_venta: number; tienda_jua: boolean; tienda_mar: boolean
+}
+type LegacyStock = {
+  tienda: string; prod: string; marca: string | null; cat: string; subcat: string | null
+  costo: number; precio_venta: number; qty: number; dias: number; f_ing: string
+}
+type LegacySales = {
+  kpis: { ventas_total: number; n_pedidos: number; n_clientes: number }
+  ventas_cat: { cat: string; ventas: number; qty: number }[]
+  tendencia: { mes: string; ventas: number }[]
+  top_prods: { prod: string; marca: string | null; ventas: number; qty: number }[]
+}
+type LegacyBasketRule = {
+  a: string; b: string; cat_a: string; cat_b: string
+  freq: number; conf_ab: number; conf_ba: number; lift: number
+}
+type ProductSeed = {
+  storeId: string; name: string; brand: string | null; category: string
+  subcategory: string | null; cost: number; price: number
+}
+
+function loadConsts(path: string): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
   for (const line of readFileSync(path, "utf8").split("\n")) {
     const m = line.match(/^const (\w+)=(.*);\s*$/)
     if (!m) continue
@@ -30,10 +53,10 @@ function check(label: string, error: unknown) {
 async function main() {
   const store = loadConsts("legacy/rescat_store.js")
   const data = loadConsts("legacy/rescat_data.js")
-  const CATALOGO = store.CATALOGO as any[]
-  const stock = (data.DATA?.stock ?? []) as any[]
-  const VENTAS = data.VENTAS_DATA as Record<string, any>
-  const MB = data.MB_DATA as Record<string, any>
+  const CATALOGO = (store.CATALOGO ?? []) as LegacyCatalogProduct[]
+  const stock = ((data.DATA as { stock?: LegacyStock[] } | undefined)?.stock ?? [])
+  const VENTAS = data.VENTAS_DATA as Record<string, LegacySales>
+  const MB = data.MB_DATA as Record<string, LegacyBasketRule[]>
 
   const { data: stores, error: sErr } = await admin.from("store").select("id,name")
   check("load stores", sErr)
@@ -80,8 +103,8 @@ async function main() {
     !(storeId === jua && MARIA_ONLY.has(name)) && !(storeId === mar && JUANITA_ONLY.has(name))
   const isShared = (name: string) => !JUANITA_ONLY.has(name) && !MARIA_ONLY.has(name)
 
-  const prodMap = new Map<string, any>()
-  const addProd = (storeId: string, p: any) => {
+  const prodMap = new Map<string, ProductSeed>()
+  const addProd = (storeId: string, p: Omit<ProductSeed, "storeId">) => {
     if (!allowedStore(storeId, p.name)) return
     const key = `${storeId}|${p.name}`
     const price = storeId === jua && isShared(p.name) ? round2(p.price * 1.05) : p.price
@@ -108,12 +131,12 @@ async function main() {
 
   for (const [scope, storeId] of Object.entries(scopeStore)) {
     const v = VENTAS[scope]
-    const gananciaTotal = round2((v.ventas_cat as any[]).reduce((s, r) => s + r.ventas * catMargin(r.cat), 0))
+    const gananciaTotal = round2(v.ventas_cat.reduce((sum, row) => sum + row.ventas * catMargin(row.cat), 0))
     check(`sales_kpi ${scope}`, (await admin.from("sales_kpi").insert({ storeId, ventasTotal: v.kpis.ventas_total, gananciaTotal, nPedidos: v.kpis.n_pedidos, nClientes: v.kpis.n_clientes })).error)
-    check(`category_sales ${scope}`, (await admin.from("category_sales").insert(v.ventas_cat.map((r: any) => ({ storeId, category: r.cat, sales: r.ventas, profit: round2(r.ventas * catMargin(r.cat)), qty: r.qty })))).error)
-    check(`monthly_sales ${scope}`, (await admin.from("monthly_sales").insert(v.tendencia.map((r: any) => ({ storeId, month: r.mes, sales: r.ventas, profit: round2(r.ventas * overallMargin) })))).error)
-    check(`top_product ${scope}`, (await admin.from("top_product").insert(v.top_prods.map((r: any, i: number) => ({ storeId, rank: i + 1, name: r.prod, brand: r.marca, sales: r.ventas, profit: round2(r.ventas * (prodMargin.get(r.prod) ?? overallMargin)), qty: r.qty })))).error)
-    check(`basket_rule ${scope}`, (await admin.from("basket_rule").insert((MB[scope] as any[]).map((r) => ({ storeId, a: r.a, b: r.b, catA: r.cat_a, catB: r.cat_b, freq: r.freq, confAB: r.conf_ab, confBA: r.conf_ba, lift: r.lift })))).error)
+    check(`category_sales ${scope}`, (await admin.from("category_sales").insert(v.ventas_cat.map((row) => ({ storeId, category: row.cat, sales: row.ventas, profit: round2(row.ventas * catMargin(row.cat)), qty: row.qty })))).error)
+    check(`monthly_sales ${scope}`, (await admin.from("monthly_sales").insert(v.tendencia.map((row) => ({ storeId, month: row.mes, sales: row.ventas, profit: round2(row.ventas * overallMargin) })))).error)
+    check(`top_product ${scope}`, (await admin.from("top_product").insert(v.top_prods.map((row, index) => ({ storeId, rank: index + 1, name: row.prod, brand: row.marca, sales: row.ventas, profit: round2(row.ventas * (prodMargin.get(row.prod) ?? overallMargin)), qty: row.qty })))).error)
+    check(`basket_rule ${scope}`, (await admin.from("basket_rule").insert(MB[scope].map((row) => ({ storeId, a: row.a, b: row.b, catA: row.cat_a, catB: row.cat_b, freq: row.freq, confAB: row.conf_ab, confBA: row.conf_ba, lift: row.lift })))).error)
   }
 
   check("box tipo duo", (await admin.from("box").update({ tipo: "duo" }).ilike("title", "%desayuno%")).error)

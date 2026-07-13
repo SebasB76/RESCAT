@@ -26,9 +26,9 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null)
 const STORAGE_KEY = "rescat_cart"
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({ children, initialCartOpen = false }: { children: ReactNode; initialCartOpen?: boolean }) {
   const [items, setItems] = useState<CartItem[]>([])
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(initialCartOpen)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {

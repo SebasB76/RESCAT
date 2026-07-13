@@ -16,7 +16,7 @@ export default async function NewBoxPage() {
     await createBox(input)
   }
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <Link href="/merchant/boxes" className="inline-flex items-center gap-1.5 text-sm font-medium text-hoja transition-colors hover:text-pino">
         <ArrowLeftIcon className="size-4" />
         Mis cajas
@@ -25,7 +25,7 @@ export default async function NewBoxPage() {
       <p className="mt-1 text-sm text-pino/60">Publica una caja sorpresa con los productos que quieres rescatar.</p>
       <div className="mt-6">
         <BoxForm
-          initial={{ title: "", description: "", items: "", category: "", originalPrice: "", price: "", stockQty: "", bestBefore: "", pickupStart: "", pickupEnd: "", photoUrl: null }}
+          initial={{ title: "", description: "", items: "", category: "", tipo: "solo", originalPrice: "", price: "", stockQty: "", bestBefore: "", pickupStart: "", pickupEnd: "", photoUrl: null }}
           products={products ?? []}
           onSubmit={onSubmit}
         />

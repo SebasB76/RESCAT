@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { toast } from "sonner"
-import { BanknoteIcon, CheckIcon, CreditCardIcon, ShoppingBasketIcon, XIcon } from "lucide-react"
+import { BanknoteIcon, CheckIcon, CreditCardIcon, InfoIcon, MapPinIcon, StarIcon, XIcon } from "lucide-react"
 import { reserveBox } from "@/actions/reservations"
 import { processPayment, type PaymentMethod } from "@/lib/payment"
 import { UrgencyChip } from "@/components/urgencyChip"
@@ -13,13 +13,16 @@ import { PickupWindow } from "@/components/pickupWindow"
 import { ProvenanceChip } from "@/components/provenanceChip"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { AuthPrompt } from "@/components/authPrompt"
 import { money } from "@/lib/format"
 import { foodKgSaved, co2KgSaved, type BoxTipo } from "@/lib/impact"
+import { boxCoverFor } from "@/lib/boxCover"
 
 export type ReserveBox = {
   id: string
   title: string
   description: string | null
+  category: string | null
   items: string[]
   price: number
   originalPrice: number
@@ -29,21 +32,31 @@ export type ReserveBox = {
   pickupEnd: string | null
   storeName: string
   neighborhood: string | null
+  address: string
+  pickupInfo: string | null
+  rating: number
+  reviewCount: number
   stockQty: number
   status: string
   tipo: BoxTipo
 }
 
-export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => void }) {
+export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox; onClose?: () => void; signedIn?: boolean | null }) {
   const router = useRouter()
   const [method, setMethod] = useState<PaymentMethod>("cashOnPickup")
   const [busy, setBusy] = useState(false)
   const [code, setCode] = useState<string | null>(null)
+  const [authRequired, setAuthRequired] = useState(false)
   const off = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
   const saved = Math.max(0, box.originalPrice - box.price)
   const soldOut = box.status !== "active" || box.stockQty < 1
+  const cover = boxCoverFor(box)
 
   async function confirm() {
+    if (signedIn === false) {
+      setAuthRequired(true)
+      return
+    }
     setBusy(true)
     try {
       const pay = await processPayment(method, box.price)
@@ -58,7 +71,8 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
     } catch (e) {
       const msg = e instanceof Error ? e.message : ""
       if (msg === "not_authenticated") {
-        router.push(`/login?next=${encodeURIComponent(`/?box=${box.id}`)}`)
+        setAuthRequired(true)
+        setBusy(false)
         return
       }
       toast.error(msg === "out_of_stock" ? "Se agotó justo ahora" : "No se pudo reservar")
@@ -69,11 +83,7 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
   return (
     <div className="overflow-hidden rounded-xl bg-white ring-1 ring-pino/12">
       <div className="relative aspect-[16/9] max-h-72 bg-pino/[0.04]">
-        {box.photoUrl ? (
-          <Image src={box.photoUrl} alt={box.title} fill sizes="(min-width: 640px) 640px, 100vw" className="object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-pino/20"><ShoppingBasketIcon className="size-14" /></div>
-        )}
+        <Image src={cover} alt={`Caja ${box.title} preparada por ${box.storeName}`} fill sizes="(min-width: 640px) 640px, 100vw" className="object-cover" />
         <RescueBadge className="absolute top-3 left-3 shadow-sm" />
         {onClose && (
           <button
@@ -111,9 +121,27 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
             <UrgencyChip bestBefore={box.bestBefore} />
           </div>
           {box.description && <p className="text-sm text-pino/80">{box.description}</p>}
+          <div className="divide-y divide-pino/10 border-y border-pino/10">
+            <div className="flex gap-3 py-3">
+              <MapPinIcon className="mt-0.5 size-4 shrink-0 text-hoja" />
+              <div><p className="text-sm font-semibold text-pino">{box.address || box.neighborhood}</p><p className="mt-0.5 text-xs text-pino/65">Retiro directo en {box.storeName}</p></div>
+            </div>
+            {box.pickupInfo && (
+              <div className="flex gap-3 py-3">
+                <InfoIcon className="mt-0.5 size-4 shrink-0 text-hoja" />
+                <div><p className="text-sm font-semibold text-pino">Cómo retirar</p><p className="mt-0.5 text-xs leading-5 text-pino/65">{box.pickupInfo}</p></div>
+              </div>
+            )}
+            {box.rating > 0 && (
+              <div className="flex items-center justify-between gap-3 py-3">
+                <p className="text-sm font-semibold text-pino">Experiencia en la tienda</p>
+                <span className="inline-flex items-center gap-1 text-sm font-bold text-pino"><StarIcon className="size-4 fill-dorado text-dorado" /> {box.rating.toFixed(1)} <span className="font-normal text-pino/55">({box.reviewCount})</span></span>
+              </div>
+            )}
+          </div>
           {box.items?.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-bold text-pino">Qué incluye</p>
+              <p className="mb-2 text-sm font-bold text-pino">Qué puede incluir</p>
               <ul className="divide-y divide-pino/10 border-y border-pino/10">
                 {box.items.map((it, i) => (
                   <li key={i} className="flex items-center gap-2 py-2 text-sm text-pino">
@@ -136,7 +164,18 @@ export function BoxReserve({ box, onClose }: { box: ReserveBox; onClose?: () => 
           </div>
           <p className="text-xs text-hoja">Al rescatar esta caja salvas ~{foodKgSaved(box.tipo)} kg de comida y evitas {co2KgSaved(box.tipo)} kg de CO₂ (estimado).</p>
 
-          {soldOut ? (
+          {authRequired ? (
+            <div>
+              <AuthPrompt
+                next={`/?box=${box.id}`}
+                title="Entra para reservar esta caja"
+                description={`La caja seguirá esperándote aquí. Al entrar podrás confirmar el rescate y recibir tu código para ${box.storeName}.`}
+              />
+              <Button type="button" variant="ghost" onClick={() => setAuthRequired(false)} className="mt-2 w-full text-pino/70">
+                Volver a la reserva
+              </Button>
+            </div>
+          ) : soldOut ? (
             <p className="rounded-lg bg-terracota/10 py-3 text-center text-sm font-semibold text-terracota">Agotado por ahora</p>
           ) : (
             <>

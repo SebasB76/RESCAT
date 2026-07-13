@@ -52,7 +52,7 @@ function Row({ r, confirm }: { r: Reservation; confirm: (fd: FormData) => void }
         {actionable ? (
           <form action={confirm}>
             <input type="hidden" name="id" value={r.id} />
-            <Button className="h-9 bg-hoja px-3 text-cream hover:bg-hoja/90">Marcar retirado</Button>
+            <Button type="submit" className="h-9 bg-hoja px-3 text-cream hover:bg-hoja/90">Marcar retirado</Button>
           </form>
         ) : r.status === "pickedUp" ? (
           <span className="flex items-center gap-1 text-sm font-medium text-hoja">

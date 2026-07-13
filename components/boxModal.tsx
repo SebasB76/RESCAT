@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { BoxReserve, type ReserveBox } from "@/components/boxReserve"
 
-export function BoxModal({ id }: { id: string }) {
+export function BoxModal({ id, signedIn }: { id: string; signedIn: boolean | null }) {
   const router = useRouter()
   const [box, setBox] = useState<ReserveBox | null>(null)
   const [missing, setMissing] = useState(false)
@@ -18,7 +18,7 @@ export function BoxModal({ id }: { id: string }) {
     let active = true
     supabase
       .from("box")
-      .select("id,title,description,items,price,originalPrice,photoUrl,bestBefore,pickupStart,pickupEnd,stockQty,status,tipo,store(name,neighborhood)")
+      .select("id,title,description,items,category,price,originalPrice,photoUrl,bestBefore,pickupStart,pickupEnd,stockQty,status,tipo,store(name,neighborhood,address,pickupInfo,review(rating))")
       .eq("id", id)
       .single()
       .then(({ data }) => {
@@ -27,11 +27,13 @@ export function BoxModal({ id }: { id: string }) {
           setMissing(true)
           return
         }
-        const store = data.store as unknown as { name: string; neighborhood: string | null } | null
+        const store = data.store as unknown as { name: string; neighborhood: string | null; address: string; pickupInfo: string | null; review: { rating: number }[] } | null
+        const reviews = store?.review ?? []
         setBox({
           id: data.id,
           title: data.title,
           description: data.description,
+          category: data.category,
           items: data.items ?? [],
           price: data.price,
           originalPrice: data.originalPrice,
@@ -42,6 +44,10 @@ export function BoxModal({ id }: { id: string }) {
           tipo: data.tipo,
           storeName: store?.name ?? "",
           neighborhood: store?.neighborhood ?? null,
+          address: store?.address ?? "",
+          pickupInfo: store?.pickupInfo ?? null,
+          rating: reviews.length ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0,
+          reviewCount: reviews.length,
           stockQty: data.stockQty,
           status: data.status,
         })
@@ -73,7 +79,7 @@ export function BoxModal({ id }: { id: string }) {
     >
       <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         {box ? (
-          <BoxReserve box={box} onClose={close} />
+          <BoxReserve box={box} onClose={close} signedIn={signedIn} />
         ) : missing ? (
           <div className="rounded-xl bg-white p-8 text-center text-pino">No se encontró la caja.</div>
         ) : (

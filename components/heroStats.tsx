@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon, SearchIcon, ShoppingBasketIcon } from "lucide-react"
 import type { DiscoveryBox } from "@/components/boxCard"
 import { money } from "@/lib/format"
+import { boxCoverFor } from "@/lib/boxCover"
 
 type HeroStatsProps = {
   boxesCount: number
@@ -94,6 +95,7 @@ export function HeroStats({
               >
                 {featuredBoxes.map((box, index) => {
                   const discount = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
+                  const cover = boxCoverFor(box)
                   return (
                     <article
                       key={box.id}
@@ -102,20 +104,14 @@ export function HeroStats({
                       aria-label={`${index + 1} de ${slideCount}`}
                       aria-hidden={index !== visibleSlide}
                     >
-                      {box.photoUrl ? (
-                        <Image
-                          src={box.photoUrl}
-                          alt={`${box.title}, disponible en ${box.storeName}`}
-                          fill
-                          priority={index === 0}
-                          sizes="(min-width: 1024px) 46vw, 100vw"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-white/35">
-                          <ShoppingBasketIcon className="size-12" aria-hidden="true" />
-                        </div>
-                      )}
+                      <Image
+                        src={cover}
+                        alt={`${box.title}, disponible en ${box.storeName}`}
+                        fill
+                        priority={index === 0}
+                        sizes="(min-width: 1024px) 46vw, 100vw"
+                        className="object-cover"
+                      />
 
                       <div className="absolute inset-x-0 bottom-0 bg-dorado p-5 text-pino sm:flex sm:items-end sm:justify-between sm:gap-6 lg:p-6">
                         <div className="min-w-0">

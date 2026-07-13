@@ -14,7 +14,7 @@ import { Cart } from "@/components/cart"
 import { BoxModal } from "@/components/boxModal"
 import { CategoryFilter } from "@/components/categoryFilter"
 import { BrandMark } from "@/components/brandMark"
-import { StoreIcon } from "lucide-react"
+import { CircleCheckIcon, StoreIcon } from "lucide-react"
 
 const DiscoveryMap = dynamic(() => import("@/components/discoveryMap"), { ssr: false })
 const GYE = { lat: -2.1709, lng: -79.9224 }
@@ -29,7 +29,7 @@ export function Storefront() {
   const [center, setCenter] = useState(GYE)
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
-  const [signedIn, setSignedIn] = useState(false)
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
 
   const [storeId, setStoreId] = useState("todas")
   const [tipo, setTipo] = useState<TipoFilter>("todos")
@@ -114,6 +114,11 @@ export function Storefront() {
     return Array.from(map.entries())
   }, [filteredProducts])
 
+  const availableStores = useMemo(() => {
+    const availableIds = new Set([...boxes.map((box) => box.storeId), ...products.map((product) => product.storeId)])
+    return stores.filter((store) => availableIds.has(store.id))
+  }, [boxes, products, stores])
+
   const avgSavingsPct = useMemo(() => {
     if (!boxes.length) return null
     const sum = boxes.reduce((acc, b) => acc + (b.originalPrice > 0 ? 1 - b.price / b.originalPrice : 0), 0)
@@ -121,12 +126,11 @@ export function Storefront() {
   }, [boxes])
 
   const featuredBoxes = useMemo(() => {
-    const withPhotos = boxes.filter((box) => box.photoUrl)
-    return (withPhotos.length > 0 ? withPhotos : boxes).slice(0, 5)
+    return boxes.slice(0, 5)
   }, [boxes])
 
   return (
-    <CartProvider>
+    <CartProvider initialCartOpen={searchParams.get("cart") === "open"}>
       <div className="min-h-dvh overflow-x-clip bg-cream">
         <header className="sticky top-0 z-30 border-b border-pino/12 bg-cream/95 backdrop-blur-md">
           <div className="product-shell flex h-16 items-center justify-between gap-4">
@@ -135,7 +139,7 @@ export function Storefront() {
               <Link href="/merchant" className="hidden items-center gap-1.5 text-pino/72 transition-colors hover:text-pino md:inline-flex"><StoreIcon className="size-4" /> Soy tienda</Link>
               <a href="#cajas" className="hidden font-semibold text-pino transition-colors hover:text-hoja sm:inline">Cajas</a>
               <a href="#catalogo" className="hidden text-pino/72 transition-colors hover:text-pino md:inline">Productos</a>
-              {signedIn ? (
+              {signedIn === true ? (
                 <>
                   <Link href="/reservations" className="text-pino transition-colors hover:text-hoja">Mis pedidos</Link>
                   <SignOutButton className="hidden sm:inline-flex" />
@@ -158,12 +162,23 @@ export function Storefront() {
           />
 
           <section id="cajas" className="scroll-mt-24 py-12 sm:py-16">
-            <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div><h2 className="section-title">Cajas disponibles hoy</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-pino/72">Elige una caja por tamaño, tienda y distancia. Cada una convierte varios excedentes en una sola compra con ahorro real.</p></div>
-              <p className="text-sm font-medium text-hoja">Reserva ahora · paga al retirar</p>
+            <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="section-title">Cajas disponibles hoy</h2>
+                  <span className="rounded-md bg-pino/[0.06] px-2 py-1 text-xs font-semibold text-pino/72" aria-live="polite">
+                    {filteredBoxes.length} {filteredBoxes.length === 1 ? "disponible" : "disponibles"}
+                  </span>
+                </div>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-pino/72">Elige por tienda, tamaño o distancia. Una caja reúne varios excedentes con ahorro real.</p>
+              </div>
+              <div className="inline-flex w-fit items-center gap-2 text-sm text-pino/72">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-dorado/55 text-pino"><CircleCheckIcon className="size-4" aria-hidden="true" /></span>
+                <p><span className="font-semibold text-pino">Reserva ahora</span> · paga al retirar</p>
+              </div>
             </div>
             <DiscoveryFilters
-              stores={stores}
+              stores={availableStores}
               storeId={storeId}
               onStoreChange={setStoreId}
               tipo={tipo}
@@ -172,7 +187,6 @@ export function Storefront() {
               onSortChange={setSort}
               view={view}
               onViewChange={setView}
-              resultCount={filteredBoxes.length}
             />
             <div className="mt-7">
               {loading ? (
@@ -201,7 +215,7 @@ export function Storefront() {
               <p className="border-y border-pino/12 py-12 text-center text-pino/60">No hay productos que coincidan.</p>
             ) : (
               <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-pino/12 ring-1 ring-pino/12 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {productGroups.map(([key, variants]) => <ProductCard key={key} product={variants[0]} variants={variants} />)}
+                {productGroups.map(([key, variants]) => <ProductCard key={key} product={variants[0]} variants={variants} signedIn={signedIn} />)}
               </div>
             )}
           </section>
@@ -211,8 +225,8 @@ export function Storefront() {
           <div className="product-shell flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between"><BrandMark onDark /><p className="max-w-xl text-sm leading-6 text-white/68">Una red de tiendas y rescatistas que convierte excedentes en ahorro local.</p><Link href="/merchant" className="text-sm font-semibold text-dorado hover:text-white">Publicar como tienda →</Link></div>
         </footer>
 
-        <Cart />
-        {boxParam && <BoxModal id={boxParam} />}
+        <Cart signedIn={signedIn} />
+        {boxParam && <BoxModal id={boxParam} signedIn={signedIn} />}
       </div>
     </CartProvider>
   )

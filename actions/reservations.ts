@@ -5,12 +5,18 @@ import type { PaymentMethod } from "@/lib/payment"
 
 export async function confirmPickup(reservationId: string) {
   const supabase = await createServerClient()
-  const { error } = await supabase.from("reservation")
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("not_authenticated")
+  const { data: updated, error } = await supabase.from("reservation")
     .update({ status: "pickedUp", pickedUpAt: new Date().toISOString() })
     .eq("id", reservationId)
     .in("status", ["reserved", "paid"])
+    .select("id,status")
+    .maybeSingle()
   if (error) throw new Error(error.message)
+  if (!updated) throw new Error("not_authorized_or_already_processed")
   revalidatePath("/merchant/reservations")
+  revalidatePath("/reservations")
 }
 
 export async function reserveBox(boxId: string, paymentMethod: PaymentMethod) {

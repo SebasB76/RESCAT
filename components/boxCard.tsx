@@ -1,12 +1,13 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowUpRightIcon, ShoppingBasketIcon, StarIcon } from "lucide-react"
+import { ArrowUpRightIcon, StarIcon } from "lucide-react"
 import { RescueBadge } from "@/components/rescueBadge"
 import { ScarcityBadge } from "@/components/scarcityBadge"
 import { PickupWindow } from "@/components/pickupWindow"
 import { ProvenanceChip } from "@/components/provenanceChip"
 import { money } from "@/lib/format"
 import { foodKgSaved } from "@/lib/impact"
+import { boxCoverFor } from "@/lib/boxCover"
 
 export type BoxTipo = "solo" | "duo" | "familia"
 export const TIPO_LABEL: Record<BoxTipo, string> = { solo: "Individual", duo: "Para dos", familia: "Familiar" }
@@ -16,10 +17,11 @@ export function BoxCard({ box }: { box: DiscoveryBox }) {
   const off = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
   const saved = Math.max(0, box.originalPrice - box.price)
   const rating = box.boxReviewCount > 0 ? box.boxRating : box.storeRating
+  const cover = boxCoverFor(box)
   return (
     <Link href={`/?box=${box.id}`} scroll={false} className="group flex min-w-0 flex-col rounded-xl bg-white p-2 ring-1 ring-pino/12 transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:ring-pino/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hoja">
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-pino/[0.045]">
-        {box.photoUrl ? <Image src={box.photoUrl} alt={box.title} fill sizes="(min-width: 1280px) 390px, (min-width: 768px) 50vw, 100vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transform-none" /> : <div className="flex h-full items-center justify-center text-pino/25"><ShoppingBasketIcon className="size-10" /></div>}
+        <Image src={cover} alt={`Caja ${box.title} preparada por ${box.storeName}`} fill sizes="(min-width: 1280px) 390px, (min-width: 768px) 50vw, 100vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transform-none" />
         <RescueBadge className="absolute left-2 top-2" />
         {off > 0 && <span className="absolute right-2 top-2 rounded-md bg-dorado px-2 py-1 text-xs font-black text-pino">−{off}%</span>}
       </div>

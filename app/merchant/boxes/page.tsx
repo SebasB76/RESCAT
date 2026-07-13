@@ -1,9 +1,10 @@
 import Link from "next/link"
 import Image from "next/image"
-import { PackageIcon, PlusIcon, PackageOpenIcon } from "lucide-react"
+import { PlusIcon, PackageOpenIcon } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 import { buttonVariants } from "@/components/ui/button"
 import { money } from "@/lib/format"
+import { boxCoverFor } from "@/lib/boxCover"
 
 const statusMeta: Record<string, { label: string; cls: string }> = {
   active: { label: "Activa", cls: "bg-hoja/15 text-hoja" },
@@ -59,13 +60,7 @@ export default async function MerchantBoxes() {
                 className="group flex flex-col overflow-hidden rounded-xl border border-pino/10 bg-white transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:ring-1 hover:ring-hoja/30"
               >
                 <div className="relative h-40 w-full bg-cream">
-                  {b.photoUrl ? (
-                    <Image src={b.photoUrl} alt={b.title} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover" unoptimized />
-                  ) : (
-                    <span className="flex h-full items-center justify-center text-pino/20">
-                      <PackageIcon className="size-10" />
-                    </span>
-                  )}
+                  <Image src={boxCoverFor(b)} alt={`Portada de ${b.title}`} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover" />
                   <span className={`absolute left-3 top-3 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${status.cls}`}>
                     {status.label}
                   </span>
