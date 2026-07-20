@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { parseGeneratedRecipe } from "@/lib/recipe"
+import { parseGeneratedRecipe, parseGeneratedRecipeText } from "@/lib/recipe"
 
 const recipe = {
   title: "Tortilla de rescate",
@@ -25,5 +25,9 @@ describe("parseGeneratedRecipe", () => {
       ...recipe,
       ingredients: [{ name: "Papa", amount: "2", source: "invented" }],
     })).toBeNull()
+  })
+
+  it("accepts Gemini JSON wrapped in a Markdown code fence", () => {
+    expect(parseGeneratedRecipeText(`\`\`\`json\n${JSON.stringify(recipe)}\n\`\`\``)).toEqual(recipe)
   })
 })

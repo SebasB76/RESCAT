@@ -43,3 +43,23 @@ export function parseGeneratedRecipe(value: unknown): GeneratedRecipe | null {
 
   return recipe as GeneratedRecipe
 }
+
+export function parseGeneratedRecipeText(value: string): GeneratedRecipe | null {
+  const trimmed = value.trim()
+  const candidates = [trimmed]
+  const firstBrace = trimmed.indexOf("{")
+  const lastBrace = trimmed.lastIndexOf("}")
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    candidates.push(trimmed.slice(firstBrace, lastBrace + 1))
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const recipe = parseGeneratedRecipe(JSON.parse(candidate))
+      if (recipe) return recipe
+    } catch {
+      // Try the next normalized candidate.
+    }
+  }
+  return null
+}

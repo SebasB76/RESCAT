@@ -1,6 +1,6 @@
 import "server-only"
 import { GoogleGenAI } from "@google/genai"
-import { parseGeneratedRecipe, type GeneratedRecipe } from "@/lib/recipe"
+import { parseGeneratedRecipeText, type GeneratedRecipe } from "@/lib/recipe"
 
 type RecipeInput = {
   boxTitle: string
@@ -122,21 +122,10 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
     throw new Error("ai_invalid_response")
   }
 
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(outputText)
-  } catch {
-    console.error("Gemini recipe response invalid", {
-      stage: "invalid_json",
-      outputLength: outputText.length,
-    })
-    throw new Error("ai_invalid_response")
-  }
-
-  const recipe = parseGeneratedRecipe(parsed)
+  const recipe = parseGeneratedRecipeText(outputText)
   if (!recipe) {
     console.error("Gemini recipe response invalid", {
-      stage: "schema_validation",
+      stage: "json_or_schema_validation",
       outputLength: outputText.length,
     })
     throw new Error("ai_invalid_response")
