@@ -98,6 +98,14 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
     }, { timeout: 25_000, maxRetries: 1 })
     outputText = interaction.output_text
   } catch (error) {
+    const details = error && typeof error === "object"
+      ? error as { status?: unknown; code?: unknown; message?: unknown }
+      : null
+    console.error("Gemini recipe request failed", {
+      status: details?.status,
+      code: details?.code,
+      message: typeof details?.message === "string" ? details.message.slice(0, 300) : "unknown_error",
+    })
     throw new Error(rateLimited(error) ? "ai_busy" : "ai_unavailable")
   }
 
