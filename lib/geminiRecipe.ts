@@ -71,6 +71,8 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
   let outputText: string | undefined
   let interactionStatus: string | undefined
   let interactionSteps = 0
+  let outputTokens: number | undefined
+  let thoughtTokens: number | undefined
 
   try {
     const interaction = await ai.interactions.create({
@@ -94,13 +96,16 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
         schema: recipeSchema,
       },
       generation_config: {
-        max_output_tokens: 1800,
+        max_output_tokens: 3000,
+        thinking_level: "minimal",
         temperature: 0.35,
       },
     }, { timeout: 25_000, maxRetries: 1 })
     outputText = interaction.output_text
     interactionStatus = interaction.status
     interactionSteps = interaction.steps.length
+    outputTokens = interaction.usage?.total_output_tokens
+    thoughtTokens = interaction.usage?.total_thought_tokens
   } catch (error) {
     const details = error && typeof error === "object"
       ? error as { status?: unknown; code?: unknown; message?: unknown }
@@ -127,7 +132,8 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
     console.error("Gemini recipe response invalid", {
       stage: "json_or_schema_validation",
       outputLength: outputText.length,
-      sample: outputText.slice(0, 1_000),
+      outputTokens,
+      thoughtTokens,
     })
     throw new Error("ai_invalid_response")
   }
