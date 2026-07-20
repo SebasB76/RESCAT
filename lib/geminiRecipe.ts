@@ -127,6 +127,7 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
     console.error("Gemini recipe response invalid", {
       stage: "json_or_schema_validation",
       outputLength: outputText.length,
+      sample: outputText.slice(0, 1_000),
     })
     throw new Error("ai_invalid_response")
   }
