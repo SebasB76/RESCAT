@@ -116,7 +116,13 @@ export async function generateReservationRecipe(reservationId: string): Promise<
     model: generated.model,
     updatedAt: new Date().toISOString(),
   }, { onConflict: "reservationId" })
-  if (error) return { ok: false, error: "ai_unavailable" }
+  if (error) {
+    console.error("Recipe persistence failed", {
+      code: error.code,
+      message: error.message.slice(0, 300),
+    })
+    return { ok: false, error: "ai_unavailable" }
+  }
 
   revalidatePath("/reservations")
   return { ok: true, recipe: generated.recipe, cached: false }

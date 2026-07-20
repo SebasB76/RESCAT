@@ -69,6 +69,8 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
 
   const ai = new GoogleGenAI({ apiKey })
   let outputText: string | undefined
+  let interactionStatus: string | undefined
+  let interactionSteps = 0
 
   try {
     const interaction = await ai.interactions.create({
@@ -97,6 +99,8 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
       },
     }, { timeout: 25_000, maxRetries: 1 })
     outputText = interaction.output_text
+    interactionStatus = interaction.status
+    interactionSteps = interaction.steps.length
   } catch (error) {
     const details = error && typeof error === "object"
       ? error as { status?: unknown; code?: unknown; message?: unknown }
@@ -109,16 +113,33 @@ export async function createRecipeWithGemini(input: RecipeInput): Promise<{ reci
     throw new Error(rateLimited(error) ? "ai_busy" : "ai_unavailable")
   }
 
-  if (!outputText) throw new Error("ai_invalid_response")
+  if (!outputText) {
+    console.error("Gemini recipe response invalid", {
+      stage: "missing_output_text",
+      status: interactionStatus,
+      steps: interactionSteps,
+    })
+    throw new Error("ai_invalid_response")
+  }
 
   let parsed: unknown
   try {
     parsed = JSON.parse(outputText)
   } catch {
+    console.error("Gemini recipe response invalid", {
+      stage: "invalid_json",
+      outputLength: outputText.length,
+    })
     throw new Error("ai_invalid_response")
   }
 
   const recipe = parseGeneratedRecipe(parsed)
-  if (!recipe) throw new Error("ai_invalid_response")
+  if (!recipe) {
+    console.error("Gemini recipe response invalid", {
+      stage: "schema_validation",
+      outputLength: outputText.length,
+    })
+    throw new Error("ai_invalid_response")
+  }
   return { recipe, model }
 }
