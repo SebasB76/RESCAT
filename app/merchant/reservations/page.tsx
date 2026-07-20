@@ -13,7 +13,7 @@ const statusTone: Record<string, string> = {
 }
 
 type Reservation = {
-  id: string; code: string; status: string; amount: number
+  id: string; code: string; status: string; amount: number; commissionAmount: number; total: number
   paymentMethod: string; boxTitle: string
   customerName: string | null; customerPhone: string | null
 }
@@ -43,7 +43,8 @@ function Row({ r, confirm }: { r: Reservation; confirm: (fd: FormData) => void }
       </div>
       <div className="flex items-center gap-4">
         <div className="text-right">
-          <div className="font-display text-lg tabular-nums text-pino">{money(r.amount)}</div>
+          <div className="font-display text-lg tabular-nums text-pino">{money(r.total)}</div>
+          <div className="text-xs tabular-nums text-pino/50">Caja {money(r.amount)} · comisión {money(r.commissionAmount)}</div>
           <div className="flex items-center justify-end gap-1 text-xs text-pino/50">
             {cash ? <BanknoteIcon className="size-3.5" /> : <CreditCardIcon className="size-3.5" />}
             {cash ? "Efectivo" : "Tarjeta"}
@@ -76,6 +77,7 @@ export default async function MerchantReservations() {
 
   const all: Reservation[] = (rows ?? []).map((r) => ({
     id: r.id, code: r.code, status: r.status, amount: Number(r.amount),
+    commissionAmount: Number(r.commissionAmount), total: Number(r.total),
     paymentMethod: r.paymentMethod, boxTitle: r.boxTitle,
     customerName: r.customerName, customerPhone: r.customerPhone,
   }))

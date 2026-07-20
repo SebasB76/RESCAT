@@ -1,4 +1,43 @@
 import { expect, test } from "@playwright/test"
+import { createClient } from "@supabase/supabase-js"
+import { config } from "dotenv"
+
+config({ path: ".env.local", quiet: true })
+
+const admin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+let fixtureBoxId: string
+
+test.describe.configure({ mode: "serial" })
+
+test.beforeAll(async () => {
+  const { data: stores } = await admin.from("store").select("id").limit(1)
+  if (!stores?.[0]) throw new Error("test_store_not_found")
+  const now = Date.now()
+  const { data: box, error } = await admin.from("box").insert({
+    storeId: stores[0].id,
+    title: `Caja sorpresa E2E ${now}`,
+    description: "Caja temporal para validar el recorrido del cliente.",
+    category: "Panadería",
+    tipo: "duo",
+    items: ["Pan", "Leche", "Fruta"],
+    originalPrice: 12,
+    price: 5,
+    stockQty: 8,
+    pickupStart: new Date(now - 60_000).toISOString(),
+    pickupEnd: new Date(now + 4 * 60 * 60_000).toISOString(),
+    status: "active",
+  }).select("id").single()
+  if (error || !box) throw error ?? new Error("test_box_not_created")
+  fixtureBoxId = box.id
+})
+
+test.afterAll(async () => {
+  if (fixtureBoxId) await admin.from("box").delete().eq("id", fixtureBoxId)
+})
 
 async function login(page: import("@playwright/test").Page, email: string, next: string) {
   await page.goto(`/login?next=${encodeURIComponent(next)}`)
@@ -10,16 +49,23 @@ async function login(page: import("@playwright/test").Page, email: string, next:
 
 test("una reserva anónima muestra acceso contextual sin perder la caja", async ({ page }) => {
   await page.goto("/")
-  await expect(page.getByRole("heading", { name: "Cajas con comida buena. A precio de rescate." })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Cajas sorpresa con comida buena. A precio de rescate." })).toBeVisible()
   const firstBox = page.locator("#cajas a[href^='/?box=']").first()
   await expect(firstBox).toBeVisible()
+  await expect(firstBox).toContainText(/−\d+%/)
+  await expect(firstBox).toContainText("incluye comisión 7%")
   await expect(firstBox.locator("img")).toHaveAttribute("src", /cajas%2Fcaja-(desayuno|despensa)\.webp/)
   await firstBox.click()
-  await expect(page.getByRole("dialog", { name: "Detalle de caja" })).toBeVisible()
+  const boxDialog = page.getByRole("dialog", { name: "Detalle de caja" })
+  await expect(boxDialog).toBeVisible()
+  await expect(boxDialog.getByText("Comisión RESCAT · 7%")).toBeVisible()
+  await expect(boxDialog.getByText("Total a pagar")).toBeVisible()
+  await boxDialog.getByRole("button", { name: /Tarjeta/ }).click()
+  await expect(boxDialog.getByLabel("Número de tarjeta")).toBeVisible()
+  await expect(boxDialog.getByText("Comisión RESCAT · 7%")).toBeVisible()
   await page.getByRole("button", { name: /Confirmar reserva/ }).click()
   await expect(page.getByRole("heading", { name: "Entra para reservar esta caja" })).toBeVisible()
   await expect(page.getByText("La caja seguirá esperándote aquí.")).toBeVisible()
-  const boxDialog = page.getByRole("dialog", { name: "Detalle de caja" })
   const authPanel = boxDialog.locator("section[aria-labelledby='auth-prompt-title']")
   const enterLink = boxDialog.getByRole("link", { name: "Entrar" })
   const signupLink = boxDialog.getByRole("link", { name: "Crear cuenta" })
@@ -32,24 +78,12 @@ test("una reserva anónima muestra acceso contextual sin perder la caja", async 
   expect(signupColor).not.toBe(panelBackground)
 })
 
-test("un producto anónimo queda en el carrito mientras se solicita acceso", async ({ page }) => {
+test("la experiencia del cliente ofrece cajas, no productos individuales", async ({ page }) => {
   await page.goto("/")
-  const addButton = page.locator("#catalogo").getByRole("button", { name: /Agregar/ }).first()
-  await addButton.scrollIntoViewIfNeeded()
-  await addButton.click()
-  await expect(page.getByRole("dialog", { name: "Tu producto ya está en el carrito" })).toBeVisible()
-  await expect(page.getByText("Tu selección se mantiene mientras entras.")).toBeVisible()
-  await expect(page.getByRole("button", { name: "Cerrar" })).toBeFocused()
-  await page.keyboard.press("Escape")
-  await expect(page.getByRole("dialog", { name: "Tu producto ya está en el carrito" })).toBeHidden()
-  await expect(page.getByLabel("Abrir carrito")).toContainText("1")
-})
-
-test("el catálogo real muestra la promoción por volumen", async ({ page }) => {
-  await page.goto("/")
-  const product = page.locator("#catalogo article").filter({ hasText: "Atún D'Gussto 140g" })
-  await expect(product).toContainText("$1.00")
-  await expect(product).toContainText("3 por $2.50")
+  await expect(page.locator("#cajas")).toBeVisible()
+  await expect(page.locator("#catalogo")).toHaveCount(0)
+  await expect(page.getByLabel("Abrir carrito")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: /Agregar/ })).toHaveCount(0)
 })
 
 test("el mapa web permite seleccionar cajas y abrir su detalle", async ({ page }) => {

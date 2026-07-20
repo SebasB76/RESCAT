@@ -11,6 +11,7 @@ import type { DiscoveryBox } from "@/components/boxCard"
 import { PickupWindow } from "@/components/pickupWindow"
 import { money } from "@/lib/format"
 import { boxCoverFor } from "@/lib/boxCover"
+import { reservationPricing } from "@/lib/pricing"
 
 function pricePin(price: number, active: boolean) {
   const background = active ? "#E7F51B" : "#073B24"
@@ -53,9 +54,9 @@ export default function DiscoveryMap({ boxes, center }: { boxes: DiscoveryBox[];
             <Marker
               key={box.id}
               position={[box.lat, box.lng]}
-              icon={pricePin(box.price, box.id === activeBox?.id)}
+              icon={pricePin(reservationPricing(box.price).total, box.id === activeBox?.id)}
               eventHandlers={{ click: () => setActiveId(box.id) }}
-              title={`${box.title}, ${money(box.price)}`}
+              title={`${box.title}, ${money(reservationPricing(box.price).total)}`}
             />
           ))}
         </MapContainer>
@@ -66,7 +67,7 @@ export default function DiscoveryMap({ boxes, center }: { boxes: DiscoveryBox[];
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-pino">{activeBox.title}</span>
               <span className="mt-0.5 block truncate text-xs text-pino/65">{activeBox.storeName} · {activeBox.distanceKm.toFixed(1)} km</span>
-              <span className="mt-1 block text-base font-black tabular-nums text-pino">{money(activeBox.price)}</span>
+              <span className="mt-1 block text-base font-black tabular-nums text-pino">{money(reservationPricing(activeBox.price).total)}</span>
             </span>
             <ArrowRightIcon className="size-4 shrink-0 text-hoja" aria-hidden="true" />
           </Link>
@@ -90,7 +91,7 @@ export default function DiscoveryMap({ boxes, center }: { boxes: DiscoveryBox[];
                     <span className="block truncate text-sm font-bold text-pino">{box.title}</span>
                     <span className="mt-0.5 block truncate text-xs text-pino/65">{box.storeName}</span>
                     <span className="mt-1 flex items-center justify-between gap-2">
-                      <span className="text-sm font-black tabular-nums text-pino">{money(box.price)}</span>
+                      <span className="text-sm font-black tabular-nums text-pino">{money(reservationPricing(box.price).total)}</span>
                       <span className="flex items-center gap-1 text-xs font-semibold text-pino/65"><StarIcon className="size-3 fill-dorado text-dorado" /> {rating.toFixed(1)}</span>
                     </span>
                   </span>

@@ -62,7 +62,7 @@ export default async function BoxDetail({ params }: { params: Promise<{ id: stri
       {items.length > 0 && (
         <section className="mt-6">
           <h2 className="text-lg font-bold text-pino">Contenido verificado</h2>
-          <p className="text-sm text-pino/72">Productos del catálogo de {store.name} que rescatas en esta caja.</p>
+          <p className="text-sm text-pino/72">Estos productos forman una sola caja sorpresa preparada por {store.name}.</p>
           <div className="mt-3 divide-y divide-pino/10 overflow-hidden rounded-xl bg-white ring-1 ring-pino/12">
             {items.map((it, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-2.5 text-sm">

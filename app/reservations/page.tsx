@@ -6,6 +6,9 @@ import { money, statusLabel } from "@/lib/format"
 import { BrandMark } from "@/components/brandMark"
 import { CircleDollarSignIcon, LeafIcon, PackageCheckIcon } from "lucide-react"
 import { co2KgSaved, foodKgSaved, type BoxTipo } from "@/lib/impact"
+import { PriceBreakdown } from "@/components/priceBreakdown"
+import { RecipeGenerator } from "@/components/recipeGenerator"
+import { parseGeneratedRecipe, type GeneratedRecipe } from "@/lib/recipe"
 
 export default async function MyOrders({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
   const { code } = await searchParams
@@ -14,7 +17,7 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
   if (!user) redirect("/login?next=/reservations")
 
   const [{ data: reservations }, { data: purchases }, { data: profile }] = await Promise.all([
-    supabase.from("reservation").select("id,code,status,amount,reservedAt,box(title,storeId,originalPrice,tipo),review(id)").eq("customerId", user.id).order("reservedAt", { ascending: false }),
+    supabase.from("reservation").select("id,code,status,amount,subtotal,commissionRate,commissionAmount,total,reservedAt,box(title,storeId,originalPrice,tipo),review(id),reservation_recipe(title,description,servings,totalMinutes,ingredients,steps,storageTips,safetyNote)").eq("customerId", user.id).order("reservedAt", { ascending: false }),
     supabase.from("purchase").select("id,code,status,total,createdAt,store(name),purchase_item(qty)").eq("customerId", user.id).order("createdAt", { ascending: false }),
     supabase.from("profile").select("fullName").eq("id", user.id).single(),
   ])
@@ -22,13 +25,34 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
   const resRows = (reservations ?? []).map((r) => {
     const box = r.box as unknown as { title: string; storeId: string; originalPrice: number; tipo: BoxTipo }
     const hasReview = Array.isArray(r.review) ? r.review.length > 0 : !!r.review
-    return { id: r.id, kind: "Caja", title: box.title, code: r.code, status: r.status, amount: Number(r.amount), originalPrice: Number(box.originalPrice), tipo: box.tipo, date: r.reservedAt, storeId: box.storeId, reviewable: r.status === "pickedUp" && !hasReview }
+    const recipeRow = Array.isArray(r.reservation_recipe) ? r.reservation_recipe[0] : r.reservation_recipe
+    const recipe = recipeRow ? parseGeneratedRecipe(recipeRow) : null
+    return {
+      id: r.id,
+      kind: "Caja" as const,
+      title: box.title,
+      code: r.code,
+      status: r.status,
+      amount: Number(r.total),
+      originalPrice: Number(box.originalPrice),
+      tipo: box.tipo,
+      date: r.reservedAt,
+      storeId: box.storeId,
+      reviewable: r.status === "pickedUp" && !hasReview,
+      pricing: {
+        subtotal: Number(r.subtotal),
+        commissionRate: Number(r.commissionRate),
+        commissionAmount: Number(r.commissionAmount),
+        total: Number(r.total),
+      },
+      recipe: recipe as GeneratedRecipe | null,
+    }
   })
   const purRows = (purchases ?? []).map((p) => {
     const store = p.store as unknown as { name: string } | null
     const items = (p.purchase_item as unknown as { qty: number }[] | null) ?? []
     const count = items.reduce((s, i) => s + i.qty, 0)
-    return { id: p.id, kind: "Compra", title: `${count} ${count === 1 ? "producto" : "productos"} · ${store?.name ?? ""}`, code: p.code, status: p.status, amount: Number(p.total), originalPrice: Number(p.total), tipo: null as BoxTipo | null, date: p.createdAt, storeId: null as string | null, reviewable: false }
+    return { id: p.id, kind: "Compra anterior" as const, title: `${count} ${count === 1 ? "producto" : "productos"} · ${store?.name ?? ""}`, code: p.code, status: p.status, amount: Number(p.total), originalPrice: Number(p.total), tipo: null as BoxTipo | null, date: p.createdAt, storeId: null as string | null, reviewable: false, pricing: null, recipe: null }
   })
   const rows = [...resRows, ...purRows].sort((a, b) => (a.date < b.date ? 1 : -1))
   const completedBoxes = resRows.filter((row) => row.status === "pickedUp")
@@ -44,7 +68,7 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
           <h1 className="text-3xl font-black tracking-[-0.035em] text-pino">{profile?.fullName ? `Hola, ${profile.fullName.split(" ")[0]}` : "Mis rescates"}</h1>
           <p className="mt-1 text-sm text-pino/72">Tus cajas, códigos de retiro e impacto acumulado.</p>
         </div>
-        <Link href="/" className="text-sm font-semibold text-hoja hover:text-pino">Seguir comprando</Link>
+        <Link href="/" className="text-sm font-semibold text-hoja hover:text-pino">Seguir rescatando</Link>
       </div>
       {code && (
         <p className="mt-3 rounded-lg bg-hoja/10 p-3 text-sm text-pino">
@@ -77,15 +101,25 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
               </div>
               <span className="shrink-0 font-mono text-sm text-pino">{r.code}</span>
             </div>
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="tabular-nums text-hoja">{money(r.amount)}</span>
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <span className="font-semibold tabular-nums text-hoja">{money(r.amount)}</span>
               <span className="rounded-full bg-pino/5 px-2 py-0.5 text-xs font-medium text-pino/70">{statusLabel(r.status)}</span>
             </div>
+            {r.pricing && (
+              <div className="mt-3 border-t border-pino/10 pt-3">
+                <PriceBreakdown pricing={r.pricing} compact />
+              </div>
+            )}
+            {r.kind === "Caja" && (
+              <div className="mt-4">
+                <RecipeGenerator reservationId={r.id} initialRecipe={r.recipe} />
+              </div>
+            )}
             {r.reviewable && <ReviewForm reservationId={r.id} />}
           </div>
         ))}
         {!rows.length && (
-          <p className="text-hoja">Aún no tienes pedidos. <Link href="/" className="text-pino underline">Explora la tienda</Link>.</p>
+          <p className="text-hoja">Aún no tienes pedidos. <Link href="/" className="text-pino underline">Explora las cajas</Link>.</p>
         )}
       </div>
     </main>

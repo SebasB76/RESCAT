@@ -18,7 +18,7 @@ describe("reserve_box", () => {
     ownerId = owner.user!.id
     const { data: store } = await admin.from("store").insert({ ownerId: owner.user!.id, name: "T", address: "A", lat: -2.17, lng: -79.9 }).select().single()
     storeId = store!.id
-    const { data: box } = await admin.from("box").insert({ storeId: store!.id, title: "T", originalPrice: 10, price: 5, stockQty: 3, pickupStart: new Date().toISOString(), pickupEnd: new Date(Date.now() + 3600e3).toISOString() }).select().single()
+    const { data: box } = await admin.from("box").insert({ storeId: store!.id, title: "T", items: ["Pan", "Leche"], originalPrice: 10, price: 5, stockQty: 3, pickupStart: new Date().toISOString(), pickupEnd: new Date(Date.now() + 3600e3).toISOString() }).select().single()
     boxId = box!.id
   })
 
@@ -39,5 +39,30 @@ describe("reserve_box", () => {
     const { data: box } = await admin.from("box").select("stockQty,status").eq("id", boxId).single()
     expect(box!.stockQty).toBe(0)
     expect(box!.status).toBe("soldOut")
+
+    const { data: reservations } = await admin
+      .from("reservation")
+      .select("id,amount,subtotal,commissionRate,commissionAmount,total")
+      .eq("boxId", boxId)
+    expect(reservations).toHaveLength(3)
+    for (const reservation of reservations ?? []) {
+      expect(reservation).toMatchObject({
+        amount: 5,
+        subtotal: 5,
+        commissionRate: 0.07,
+        commissionAmount: 0.35,
+        total: 5.35,
+      })
+    }
+
+    const reservationIds = (reservations ?? []).map((reservation) => reservation.id)
+    const { data: snapshots } = await admin
+      .from("reservation_item")
+      .select("reservationId,name,qty")
+      .in("reservationId", reservationIds)
+    expect(snapshots).toHaveLength(6)
+    expect(snapshots?.map((item) => item.name).sort()).toEqual([
+      "Leche", "Leche", "Leche", "Pan", "Pan", "Pan",
+    ])
   })
 })

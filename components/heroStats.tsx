@@ -7,6 +7,7 @@ import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon, MapPinIcon, SearchIc
 import type { DiscoveryBox } from "@/components/boxCard"
 import { money } from "@/lib/format"
 import { boxCoverFor } from "@/lib/boxCover"
+import { discountPercent, reservationPricing } from "@/lib/pricing"
 
 type HeroStatsProps = {
   boxesCount: number
@@ -49,7 +50,7 @@ export function HeroStats({
           </p>
 
           <h1 className="mt-5 max-w-[12ch] text-5xl font-black leading-[0.94] tracking-[-0.04em] text-white sm:text-6xl lg:text-[4.6rem]">
-            Cajas con buenos productos. A precio de rescate.
+            Cajas sorpresa con comida buena. A precio de rescate.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-white/78 sm:text-lg">
             Cada caja reúne productos de una tienda local a un precio especial. Reserva la tuya, recógela y paga al retirar.
@@ -94,7 +95,8 @@ export function HeroStats({
                 style={{ transform: `translateX(-${visibleSlide * 100}%)` }}
               >
                 {featuredBoxes.map((box, index) => {
-                  const discount = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
+                  const pricing = reservationPricing(box.price)
+                  const discount = discountPercent(box.originalPrice, pricing.total)
                   const cover = boxCoverFor(box)
                   return (
                     <article
@@ -121,8 +123,9 @@ export function HeroStats({
                         </div>
                         <div className="mt-4 flex shrink-0 items-end justify-between gap-5 sm:mt-0 sm:block sm:text-right">
                           <div>
-                            {box.originalPrice > box.price && <p className="text-sm font-medium line-through opacity-65">{money(box.originalPrice)}</p>}
-                            <p className="text-3xl font-black leading-none tracking-[-0.03em]">{money(box.price)}</p>
+                            {box.originalPrice > pricing.total && <p className="text-sm font-medium line-through opacity-65">{money(box.originalPrice)}</p>}
+                            <p className="text-3xl font-black leading-none tracking-[-0.03em]">{money(pricing.total)}</p>
+                            <p className="mt-1 text-xs font-semibold opacity-75">Total · comisión incluida</p>
                           </div>
                           <Link
                             href={`/?box=${box.id}`}

@@ -6,8 +6,10 @@ RESCAT se presenta como una red urbana de rescate alimentario, no como una campa
 
 ## Principios
 
-- **Lo disponible primero.** El usuario debe llegar a las cajas y productos antes que a una historia de marca.
-- **Ahorro explícito.** Precio, disponibilidad, retiro y tienda forman una sola jerarquía de decisión.
+- **Lo disponible primero.** El usuario debe llegar a las cajas sorpresa antes que a una historia de marca.
+- **Ahorro explícito.** Porcentaje de descuento, subtotal, comisión, total, disponibilidad, retiro y tienda forman una sola jerarquía de decisión.
+- **Una sola unidad de compra.** El cliente reserva cajas sorpresa; los productos individuales solo describen su contenido y nunca se venden por separado.
+- **Aprovechamiento después del rescate.** Cada reserva puede generar, mediante un botón, una receta con IA basada en el contenido registrado de la caja.
 - **Impacto como consecuencia.** La misión acompaña la acción; no reemplaza la información práctica.
 - **Una sola voz.** La tipografía nativa del sistema sostiene títulos, datos, controles y copy; la mono queda reservada para códigos y datos operativos. Esto evita descargas bloqueantes y conserva nitidez en cada plataforma.
 - **Señal, no decoración.** Verde pino identifica la red; amarillo rescate destaca acciones y estados activos; terracota solo marca riesgo.
@@ -24,6 +26,7 @@ RESCAT se presenta como una red urbana de rescate alimentario, no como una campa
 
 ## Estructura
 
-- Marketplace: cabecera compacta, disponibilidad contextual, búsqueda, cajas, catálogo, carrito.
+- Marketplace: cabecera compacta, disponibilidad contextual, búsqueda y cajas sorpresa con precio final transparente.
+- Reserva: desglose de subtotal, comisión y total antes de confirmar; receta con IA disponible después de reservar.
 - Merchant: navegación lateral clara, selector de tienda, resumen operativo, excepciones y análisis.
 - Superficies de auth/detalle: composición enfocada, sin hero decorativo ni tarjetas anidadas.

@@ -25,6 +25,9 @@ coverage/
 .vercel
 *.pem
 
+# Supabase CLI local state
+supabase/.temp/
+
 # Playwright
 test-results/
 playwright-report/

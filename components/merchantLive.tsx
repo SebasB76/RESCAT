@@ -12,9 +12,10 @@ export function MerchantLive() {
     const channel = supabase
       .channel("merchant-reservations")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "reservation" }, (payload) => {
-        const row = payload.new as { code?: string; amount?: number }
+        const row = payload.new as { code?: string; amount?: number; total?: number }
+        const customerTotal = row.total ?? row.amount
         toast.success(`Nueva reserva · ${row.code ?? ""}`, {
-          description: row.amount != null ? `${money(Number(row.amount))} · toca Reservas para ver` : undefined,
+          description: customerTotal != null ? `${money(Number(customerTotal))} total · toca Reservas para ver` : undefined,
         })
         router.refresh()
       })

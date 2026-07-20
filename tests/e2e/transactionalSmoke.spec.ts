@@ -27,8 +27,6 @@ test("reserva → aviso a tienda → retiro → reseña visible en la caja", asy
   const startedAt = new Date().toISOString()
   let reservationId: string | null = null
   let boxId: string | null = null
-  let originalStock = 0
-  let originalStatus = "active"
 
   const { data: users } = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 })
   const merchant = users.users.find((user) => user.email === "tienda@rescat.ec")
@@ -37,21 +35,29 @@ test("reserva → aviso a tienda → retiro → reseña visible en la caja", asy
   expect(customer).toBeTruthy()
 
   const { data: stores } = await admin.from("store").select("id,name").eq("ownerId", merchant!.id)
-  const storeIds = (stores ?? []).map((store) => store.id)
-  const { data: boxes } = await admin
+  expect(stores?.[0]).toBeTruthy()
+  const now = Date.now()
+  const { data: box, error: boxError } = await admin
     .from("box")
+    .insert({
+      storeId: stores![0].id,
+      title: `Caja smoke ${now}`,
+      description: "Caja temporal del recorrido transaccional.",
+      category: "Despensa",
+      tipo: "duo",
+      items: ["Arroz", "Atún", "Tomate"],
+      originalPrice: 10,
+      price: 4,
+      stockQty: 3,
+      pickupStart: new Date(now - 60_000).toISOString(),
+      pickupEnd: new Date(now + 4 * 60 * 60_000).toISOString(),
+      status: "active",
+    })
     .select("id,title,storeId,stockQty,status")
-    .in("storeId", storeIds)
-    .eq("status", "active")
-    .gt("stockQty", 1)
-    .gt("pickupEnd", new Date().toISOString())
-    .order("stockQty", { ascending: false })
-    .limit(1)
-  const box = boxes?.[0]
+    .single()
+  expect(boxError).toBeNull()
   expect(box).toBeTruthy()
   boxId = box!.id
-  originalStock = box!.stockQty
-  originalStatus = box!.status
 
   const { data: profile } = await admin.from("profile").select("fullName,phone").eq("id", customer!.id).single()
   const reviewComment = `Smoke RESCAT ${Date.now()}: caja recibida correctamente.`
@@ -70,6 +76,7 @@ test("reserva → aviso a tienda → retiro → reseña visible en la caja", asy
     await expect(detailDialog.getByRole("heading", { name: box!.title })).toBeVisible()
     await customerPage.getByRole("button", { name: /Confirmar reserva/ }).click()
     await expect(customerPage.getByText("Reserva confirmada")).toBeVisible()
+    await expect(customerPage.getByRole("button", { name: "Generar receta con IA" })).toBeVisible()
     const code = (await customerPage.getByText(/^RC-[A-F0-9]{6}$/).textContent())!
 
     const { data: reservation } = await admin
@@ -126,7 +133,7 @@ test("reserva → aviso a tienda → retiro → reseña visible en la caja", asy
       reservationId = recent?.[0]?.id ?? null
     }
     if (reservationId) await admin.from("reservation").delete().eq("id", reservationId)
-    if (boxId) await admin.from("box").update({ stockQty: originalStock, status: originalStatus }).eq("id", boxId)
+    if (boxId) await admin.from("box").delete().eq("id", boxId)
     await merchantContext.close()
     await customerContext.close()
   }

@@ -17,6 +17,9 @@ import { AuthPrompt } from "@/components/authPrompt"
 import { money } from "@/lib/format"
 import { foodKgSaved, co2KgSaved, type BoxTipo } from "@/lib/impact"
 import { boxCoverFor } from "@/lib/boxCover"
+import { discountPercent, reservationPricing } from "@/lib/pricing"
+import { PriceBreakdown } from "@/components/priceBreakdown"
+import { RecipeGenerator } from "@/components/recipeGenerator"
 
 export type ReserveBox = {
   id: string
@@ -45,10 +48,11 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
   const router = useRouter()
   const [method, setMethod] = useState<PaymentMethod>("cashOnPickup")
   const [busy, setBusy] = useState(false)
-  const [code, setCode] = useState<string | null>(null)
+  const [reservation, setReservation] = useState<{ id: string; code: string } | null>(null)
   const [authRequired, setAuthRequired] = useState(false)
-  const off = box.originalPrice > 0 ? Math.round((1 - box.price / box.originalPrice) * 100) : 0
-  const saved = Math.max(0, box.originalPrice - box.price)
+  const pricing = reservationPricing(box.price)
+  const off = discountPercent(box.originalPrice, pricing.total)
+  const saved = Math.max(0, box.originalPrice - pricing.total)
   const soldOut = box.status !== "active" || box.stockQty < 1
   const cover = boxCoverFor(box)
 
@@ -59,14 +63,14 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
     }
     setBusy(true)
     try {
-      const pay = await processPayment(method, box.price)
+      const pay = await processPayment(method, pricing.total)
       if (!pay.ok) {
         toast.error("El pago no se pudo procesar")
         setBusy(false)
         return
       }
-      const reservation = await reserveBox(box.id, method)
-      setCode(reservation.code)
+      const confirmed = await reserveBox(box.id, method)
+      setReservation({ id: confirmed.id, code: confirmed.code })
       router.refresh()
     } catch (e) {
       const msg = e instanceof Error ? e.message : ""
@@ -83,7 +87,7 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
   return (
     <div className="overflow-hidden rounded-xl bg-white ring-1 ring-pino/12">
       <div className="relative aspect-[16/9] max-h-72 bg-pino/[0.04]">
-        <Image src={cover} alt={`Caja ${box.title} preparada por ${box.storeName}`} fill sizes="(min-width: 640px) 640px, 100vw" className="object-cover" />
+        <Image src={cover} alt={`Caja ${box.title} preparada por ${box.storeName}`} fill loading="eager" sizes="(min-width: 640px) 640px, 100vw" className="object-cover" />
         <RescueBadge className="absolute top-3 left-3 shadow-sm" />
         {onClose && (
           <button
@@ -100,14 +104,22 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
         <h2 className="mt-3 text-2xl font-black leading-tight tracking-[-0.035em] text-pino">{box.title}</h2>
       </div>
 
-      {code ? (
-        <div className="p-5 text-center sm:p-6">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-hoja/15 text-hoja">
-            <CheckIcon className="size-7" />
+      {reservation ? (
+        <div className="p-5 sm:p-6">
+          <div className="text-center">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-hoja/15 text-hoja">
+              <CheckIcon className="size-7" />
+            </div>
+            <p className="mt-3 text-xl font-bold text-pino">Reserva confirmada</p>
+            <p className="mt-1 text-sm text-hoja">Muestra este código en {box.storeName} al retirar.</p>
+            <p className="mt-4 rounded-lg bg-dorado/35 py-3 font-mono text-2xl font-bold tracking-widest text-pino ring-1 ring-pino/12">{reservation.code}</p>
           </div>
-          <p className="mt-3 text-xl font-bold text-pino">Reserva confirmada</p>
-          <p className="mt-1 text-sm text-hoja">Muestra este código en {box.storeName} al retirar.</p>
-          <p className="mt-4 rounded-lg bg-dorado/35 py-3 font-mono text-2xl font-bold tracking-widest text-pino ring-1 ring-pino/12">{code}</p>
+          <div className="mt-5 bg-pino/[0.035] p-4">
+            <PriceBreakdown pricing={pricing} compact />
+          </div>
+          <div className="mt-5">
+            <RecipeGenerator reservationId={reservation.id} />
+          </div>
           <div className="mt-5 flex gap-2">
             <Button onClick={() => router.push("/reservations")} variant="outline" className="flex-1 border-pino/20">Mis pedidos</Button>
             <Button onClick={onClose ?? (() => router.push("/"))} className="flex-1 bg-pino">Listo</Button>
@@ -153,14 +165,17 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
           )}
           <div className="flex items-center justify-between rounded-lg bg-pino/[0.045] px-4 py-3">
             <div>
-              <p className="text-xs text-pino/50">Precio rescate</p>
-              <p className="text-2xl font-black tracking-[-0.03em] text-pino tabular-nums">{money(box.price)}</p>
+              <p className="text-xs text-pino/50">Total con comisión</p>
+              <p className="text-2xl font-black tracking-[-0.03em] text-pino tabular-nums">{money(pricing.total)}</p>
               {saved > 0 && <p className="text-sm font-semibold text-hoja">Ahorras {money(saved)}</p>}
             </div>
             <div className="text-right">
               <p className="text-sm text-pino/40 line-through tabular-nums">{money(box.originalPrice)}</p>
               {off > 0 && <span className="mt-1 inline-block rounded-full bg-terracota/15 px-2 py-0.5 text-xs font-bold text-terracota">-{off}%</span>}
             </div>
+          </div>
+          <div className="px-1">
+            <PriceBreakdown pricing={pricing} compact />
           </div>
           <p className="text-xs text-hoja">Al rescatar esta caja salvas ~{foodKgSaved(box.tipo)} kg de alimentos y evitas {co2KgSaved(box.tipo)} kg de CO₂ (estimado).</p>
 
@@ -204,15 +219,15 @@ export function BoxReserve({ box, onClose, signedIn = null }: { box: ReserveBox;
               </div>
               {method === "cardMock" && (
                 <div className="space-y-2 rounded-lg bg-pino/[0.035] p-3 ring-1 ring-pino/10">
-                  <Input placeholder="Número de tarjeta" inputMode="numeric" />
+                  <Input aria-label="Número de tarjeta" placeholder="Número de tarjeta" inputMode="numeric" />
                   <div className="grid grid-cols-2 gap-2">
-                    <Input placeholder="MM/AA" />
-                    <Input placeholder="CVV" inputMode="numeric" />
+                    <Input aria-label="Fecha de expiración" placeholder="MM/AA" />
+                    <Input aria-label="Código de seguridad" placeholder="CVV" inputMode="numeric" />
                   </div>
                 </div>
               )}
               <Button onClick={confirm} disabled={busy} size="lg" className="w-full bg-pino text-base">
-                {busy ? "Procesando…" : `Confirmar reserva · ${money(box.price)}`}
+                {busy ? "Procesando…" : `Confirmar reserva · ${money(pricing.total)}`}
               </Button>
             </>
           )}

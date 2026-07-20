@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { money } from "@/lib/format"
 import type { BoxTipo } from "@/components/boxCard"
+import { COMMISSION_RATE, discountPercent, reservationPricing } from "@/lib/pricing"
 
 export type BoxFormValues = {
   title: string
@@ -95,9 +96,10 @@ export function BoxForm({ initial, initialProducts = [], products, onSubmit }: {
   const originalPrice = Number(values.originalPrice)
   const rescuePrice = Number(values.price)
   const hasPrices = values.originalPrice !== "" && values.price !== "" && originalPrice > 0 && rescuePrice >= 0
-  const priceError = hasPrices && rescuePrice > originalPrice
-  const discount = hasPrices && !priceError ? Math.round((1 - rescuePrice / originalPrice) * 100) : null
-  const recommendedPrice = originalPrice > 0 ? originalPrice * 0.5 : 0
+  const customerPricing = reservationPricing(rescuePrice)
+  const priceError = hasPrices && customerPricing.total >= originalPrice
+  const discount = hasPrices && !priceError ? discountPercent(originalPrice, customerPricing.total) : null
+  const recommendedPrice = originalPrice > 0 ? originalPrice * 0.5 / (1 + COMMISSION_RATE) : 0
 
   function toggleProduct(id: string) {
     setSelected((current) => current.some((row) => row.productId === id)
@@ -350,10 +352,10 @@ export function BoxForm({ initial, initialProducts = [], products, onSubmit }: {
             </div>
 
             {priceError ? (
-              <p className="mt-4 rounded-lg bg-terracota/10 p-3 text-sm font-semibold text-terracota">El precio de rescate no puede superar el valor normal.</p>
+              <p className="mt-4 rounded-lg bg-terracota/10 p-3 text-sm font-semibold text-terracota">El total para el cliente, incluida la comisión, debe ser menor al valor normal de la caja.</p>
             ) : discount !== null ? (
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-hoja/[0.07] p-4">
-                <div><p className="text-sm font-semibold text-pino">El cliente ahorra {money(originalPrice - rescuePrice)}</p><p className="mt-0.5 text-xs text-pino/65">La diferencia se muestra en la tarjeta y el detalle de la caja.</p></div>
+                <div><p className="text-sm font-semibold text-pino">El cliente ahorra {money(Math.max(0, originalPrice - customerPricing.total))}</p><p className="mt-0.5 text-xs text-pino/65">Incluye la comisión RESCAT del 7% y coincide con el total que verá al reservar.</p></div>
                 <span className="rounded-md bg-hoja px-3 py-1.5 text-sm font-black tabular-nums text-white">−{discount}%</span>
               </div>
             ) : null}
@@ -386,7 +388,7 @@ export function BoxForm({ initial, initialProducts = [], products, onSubmit }: {
                 <h3 className="mt-1 text-lg font-bold leading-tight text-pino">{values.title || "Tu caja de rescate"}</h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-5 text-pino/65">{values.description || selected.map((row) => productById.get(row.productId)?.name).filter(Boolean).join(" · ") || manualItems.join(" · ")}</p>
                 <div className="mt-4 flex items-end justify-between border-t border-pino/10 pt-3">
-                  <div><p className="text-xs tabular-nums text-pino/55 line-through">{hasPrices ? money(originalPrice) : ""}</p><p className="text-2xl font-black tabular-nums text-pino">{hasPrices ? money(rescuePrice) : "—"}</p></div>
+                  <div><p className="text-xs tabular-nums text-pino/55 line-through">{hasPrices ? money(originalPrice) : ""}</p><p className="text-2xl font-black tabular-nums text-pino">{hasPrices ? money(customerPricing.total) : "—"}</p><p className="mt-1 text-[0.68rem] text-pino/60">Total · incluye comisión 7%</p></div>
                   <p className="text-sm font-semibold text-pino/65">{values.stockQty || "0"} cajas</p>
                 </div>
               </div>

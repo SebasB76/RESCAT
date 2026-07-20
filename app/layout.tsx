@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "RESCAT — Rescata productos. Ahorra. Cuida el planeta.",
-  description: "Cajas sorpresa de tiendas de barrio en Guayaquil a precio rescate.",
+  title: "RESCAT — Cajas sorpresa contra el desperdicio",
+  description: "Reserva cajas sorpresa de tiendas de barrio en Guayaquil a precio de rescate.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

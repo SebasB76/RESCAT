@@ -116,6 +116,35 @@ export type Database = {
           },
         ]
       }
+      demo_box_schedule: {
+        Row: {
+          boxId: string
+          dailyStockQty: number
+          enabled: boolean
+          lastRefreshedAt: string | null
+        }
+        Insert: {
+          boxId: string
+          dailyStockQty: number
+          enabled?: boolean
+          lastRefreshedAt?: string | null
+        }
+        Update: {
+          boxId?: string
+          dailyStockQty?: number
+          enabled?: boolean
+          lastRefreshedAt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_box_schedule_boxId_fkey"
+            columns: ["boxId"]
+            isOneToOne: true
+            referencedRelation: "box"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product: {
         Row: {
           brand: string | null
@@ -480,6 +509,8 @@ export type Database = {
           amount: number
           boxId: string
           code: string
+          commissionAmount: number
+          commissionRate: number
           customerId: string
           expiresAt: string
           id: string
@@ -487,11 +518,15 @@ export type Database = {
           pickedUpAt: string | null
           reservedAt: string
           status: Database["public"]["Enums"]["reservation_status"]
+          subtotal: number
+          total: number
         }
         Insert: {
           amount: number
           boxId: string
           code: string
+          commissionAmount: number
+          commissionRate: number
           customerId: string
           expiresAt: string
           id?: string
@@ -499,11 +534,15 @@ export type Database = {
           pickedUpAt?: string | null
           reservedAt?: string
           status?: Database["public"]["Enums"]["reservation_status"]
+          subtotal: number
+          total: number
         }
         Update: {
           amount?: number
           boxId?: string
           code?: string
+          commissionAmount?: number
+          commissionRate?: number
           customerId?: string
           expiresAt?: string
           id?: string
@@ -511,6 +550,8 @@ export type Database = {
           pickedUpAt?: string | null
           reservedAt?: string
           status?: Database["public"]["Enums"]["reservation_status"]
+          subtotal?: number
+          total?: number
         }
         Relationships: [
           {
@@ -525,6 +566,120 @@ export type Database = {
             columns: ["customerId"]
             isOneToOne: false
             referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_item: {
+        Row: {
+          brand: string | null
+          category: string | null
+          createdAt: string
+          id: string
+          name: string
+          productId: string | null
+          qty: number
+          reservationId: string
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          createdAt?: string
+          id?: string
+          name: string
+          productId?: string | null
+          qty?: number
+          reservationId: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          createdAt?: string
+          id?: string
+          name?: string
+          productId?: string | null
+          qty?: number
+          reservationId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_item_productId_fkey"
+            columns: ["productId"]
+            isOneToOne: false
+            referencedRelation: "product"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_item_reservationId_fkey"
+            columns: ["reservationId"]
+            isOneToOne: false
+            referencedRelation: "reservation"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_recipe: {
+        Row: {
+          createdAt: string
+          customerId: string
+          description: string
+          id: string
+          ingredients: Json
+          model: string
+          reservationId: string
+          safetyNote: string
+          servings: number
+          steps: Json
+          storageTips: string[]
+          title: string
+          totalMinutes: number
+          updatedAt: string
+        }
+        Insert: {
+          createdAt?: string
+          customerId: string
+          description: string
+          id?: string
+          ingredients: Json
+          model: string
+          reservationId: string
+          safetyNote: string
+          servings: number
+          steps: Json
+          storageTips?: string[]
+          title: string
+          totalMinutes: number
+          updatedAt?: string
+        }
+        Update: {
+          createdAt?: string
+          customerId?: string
+          description?: string
+          id?: string
+          ingredients?: Json
+          model?: string
+          reservationId?: string
+          safetyNote?: string
+          servings?: number
+          steps?: Json
+          storageTips?: string[]
+          title?: string
+          totalMinutes?: number
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_recipe_customerId_fkey"
+            columns: ["customerId"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_recipe_reservationId_fkey"
+            columns: ["reservationId"]
+            isOneToOne: true
+            referencedRelation: "reservation"
             referencedColumns: ["id"]
           },
         ]
@@ -655,6 +810,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      refresh_demo_boxes: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       list_boxes_near: {
         Args: {
           p_lat: number
@@ -749,6 +908,8 @@ export type Database = {
           code: string
           status: Database["public"]["Enums"]["reservation_status"]
           amount: number
+          commissionAmount: number
+          total: number
           paymentMethod: Database["public"]["Enums"]["payment_method"]
           reservedAt: string
           pickedUpAt: string | null

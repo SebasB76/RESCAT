@@ -5,16 +5,13 @@ import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { BoxCard, type DiscoveryBox } from "@/components/boxCard"
-import { ProductCard, type CatalogProduct } from "@/components/productCard"
 import { HeroStats } from "@/components/heroStats"
 import { DiscoveryFilters, type SortMode, type ViewMode, type TipoFilter } from "@/components/discoveryFilters"
 import { SignOutButton } from "@/components/signOutButton"
-import { CartProvider } from "@/components/cartProvider"
-import { Cart } from "@/components/cart"
 import { BoxModal } from "@/components/boxModal"
-import { CategoryFilter } from "@/components/categoryFilter"
 import { BrandMark } from "@/components/brandMark"
 import { CircleCheckIcon, StoreIcon } from "lucide-react"
+import { reservationPricing } from "@/lib/pricing"
 
 const DiscoveryMap = dynamic(() => import("@/components/discoveryMap"), { ssr: false })
 const GYE = { lat: -2.1709, lng: -79.9224 }
@@ -24,7 +21,6 @@ export function Storefront() {
   const boxParam = searchParams.get("box")
 
   const [boxes, setBoxes] = useState<DiscoveryBox[]>([])
-  const [products, setProducts] = useState<CatalogProduct[]>([])
   const [stores, setStores] = useState<{ id: string; name: string }[]>([])
   const [center, setCenter] = useState(GYE)
   const [loading, setLoading] = useState(true)
@@ -36,22 +32,17 @@ export function Storefront() {
   const [sort, setSort] = useState<SortMode>("distance")
   const [view, setView] = useState<ViewMode>("list")
   const [search, setSearch] = useState("")
-  const [category, setCategory] = useState("Todos")
-
   useEffect(() => {
     const supabase = createBrowserClient()
     let active = true
     ;(async () => {
-      const [{ data: userData }, { data: st }, { data: prods }] = await Promise.all([
+      const [{ data: userData }, { data: st }] = await Promise.all([
         supabase.auth.getUser(),
         supabase.from("store").select("id, name").order("name"),
-        supabase.from("product").select("id,name,brand,category,subcategory,price,photoUrl,storeId").order("name"),
       ])
       if (!active) return
       setSignedIn(!!userData.user)
       setStores(st ?? [])
-      const names = new Map((st ?? []).map((s): [string, string] => [s.id, s.name]))
-      setProducts((prods ?? []).map((p) => ({ ...p, storeName: names.get(p.storeId) ?? "" })))
     })()
 
     function load(lat: number, lng: number) {
@@ -88,40 +79,17 @@ export function Storefront() {
     return [...list].sort((a, b) => (sort === "distance" ? a.distanceKm - b.distanceKm : ratingOf(b) - ratingOf(a)))
   }, [boxes, storeId, tipo, sort, q])
 
-  const categories = useMemo(() => {
-    const set = new Set<string>()
-    products.forEach((p) => { if (p.category) set.add(p.category) })
-    return ["Todos", ...Array.from(set).sort()]
-  }, [products])
-
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      if (storeId !== "todas" && p.storeId !== storeId) return false
-      if (category !== "Todos" && p.category !== category) return false
-      if (q && !(p.name.toLowerCase().includes(q) || (p.brand ?? "").toLowerCase().includes(q))) return false
-      return true
-    })
-  }, [products, storeId, category, q])
-
-  const productGroups = useMemo(() => {
-    const map = new Map<string, CatalogProduct[]>()
-    for (const p of filteredProducts) {
-      const key = `${p.name}|${p.brand ?? ""}`
-      const arr = map.get(key)
-      if (arr) arr.push(p)
-      else map.set(key, [p])
-    }
-    return Array.from(map.entries())
-  }, [filteredProducts])
-
   const availableStores = useMemo(() => {
-    const availableIds = new Set([...boxes.map((box) => box.storeId), ...products.map((product) => product.storeId)])
+    const availableIds = new Set(boxes.map((box) => box.storeId))
     return stores.filter((store) => availableIds.has(store.id))
-  }, [boxes, products, stores])
+  }, [boxes, stores])
 
   const avgSavingsPct = useMemo(() => {
     if (!boxes.length) return null
-    const sum = boxes.reduce((acc, b) => acc + (b.originalPrice > 0 ? 1 - b.price / b.originalPrice : 0), 0)
+    const sum = boxes.reduce((acc, b) => {
+      const total = reservationPricing(b.price).total
+      return acc + (b.originalPrice > total ? 1 - total / b.originalPrice : 0)
+    }, 0)
     return Math.round((sum / boxes.length) * 100)
   }, [boxes])
 
@@ -130,15 +98,13 @@ export function Storefront() {
   }, [boxes])
 
   return (
-    <CartProvider initialCartOpen={searchParams.get("cart") === "open"}>
-      <div className="min-h-dvh overflow-x-clip bg-cream">
+    <div className="min-h-dvh overflow-x-clip bg-cream">
         <header className="sticky top-0 z-30 border-b border-pino/12 bg-cream/95 backdrop-blur-md">
           <div className="product-shell flex h-16 items-center justify-between gap-4">
             <BrandMark />
             <nav className="flex items-center gap-4 text-sm font-medium" aria-label="Navegación principal">
               <Link href="/merchant" className="hidden items-center gap-1.5 text-pino/72 transition-colors hover:text-pino md:inline-flex"><StoreIcon className="size-4" /> Soy tienda</Link>
               <a href="#cajas" className="hidden font-semibold text-pino transition-colors hover:text-hoja sm:inline">Cajas</a>
-              <a href="#catalogo" className="hidden text-pino/72 transition-colors hover:text-pino md:inline">Productos</a>
               {signedIn === true ? (
                 <>
                   <Link href="/reservations" className="text-pino transition-colors hover:text-hoja">Mis pedidos</Link>
@@ -194,7 +160,10 @@ export function Storefront() {
                   {Array.from({ length: 6 }).map((_, i) => <div key={i} className="aspect-[4/5] animate-pulse rounded-xl bg-pino/[0.06]" />)}
                 </div>
               ) : filteredBoxes.length === 0 ? (
-                <div className="border-y border-pino/12 py-14 text-center"><p className="font-semibold text-pino">No hay cajas con estos filtros.</p><p className="mt-1 text-sm text-pino/72">Prueba otra tienda o tamaño.</p></div>
+                <div className="border-y border-pino/12 py-14 text-center">
+                  <p className="font-semibold text-pino">{boxes.length === 0 ? "No hay cajas disponibles ahora." : "No hay cajas con estos filtros."}</p>
+                  <p className="mt-1 text-sm text-pino/72">{boxes.length === 0 ? "Las tiendas están preparando sus próximos rescates. Vuelve a consultar pronto." : "Prueba otra tienda o tamaño."}</p>
+                </div>
               ) : view === "list" ? (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{filteredBoxes.map((b) => <BoxCard key={b.id} box={b} />)}</div>
               ) : (
@@ -203,31 +172,13 @@ export function Storefront() {
             </div>
           </section>
 
-          <section id="catalogo" className="scroll-mt-24 border-t border-pino/15 py-12 sm:py-16">
-            <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div><h2 className="section-title">¿Buscas algo específico?</h2><p className="mt-2 text-sm leading-6 text-pino/72">El catálogo por producto es una alternativa para completar tu compra. Las cajas siguen siendo la forma principal de rescatar.</p></div>
-              <p className="text-sm font-semibold text-pino">{productGroups.length} resultados</p>
-            </div>
-            <div className="mb-7">
-              <CategoryFilter categories={categories} value={category} onChange={setCategory} />
-            </div>
-            {productGroups.length === 0 ? (
-              <p className="border-y border-pino/12 py-12 text-center text-pino/60">No hay productos que coincidan.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-pino/12 ring-1 ring-pino/12 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {productGroups.map(([key, variants]) => <ProductCard key={key} product={variants[0]} variants={variants} signedIn={signedIn} />)}
-              </div>
-            )}
-          </section>
         </main>
 
         <footer className="border-t border-pino/15 bg-pino text-white">
           <div className="product-shell flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between"><BrandMark onDark /><p className="max-w-xl text-sm leading-6 text-white/68">Una red de tiendas y rescatistas que convierte excedentes en ahorro local.</p><Link href="/merchant" className="text-sm font-semibold text-dorado hover:text-white">Publicar como tienda →</Link></div>
         </footer>
 
-        <Cart signedIn={signedIn} />
         {boxParam && <BoxModal id={boxParam} signedIn={signedIn} />}
-      </div>
-    </CartProvider>
+    </div>
   )
 }
