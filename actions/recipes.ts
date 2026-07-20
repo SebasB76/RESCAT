@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createServerClient } from "@/lib/supabase/server"
-import { createRecipeWithOpenAI } from "@/lib/openaiRecipe"
+import { createRecipeWithGemini } from "@/lib/geminiRecipe"
 import { parseGeneratedRecipe, type GeneratedRecipe } from "@/lib/recipe"
 import type { Json } from "@/lib/database.types"
 
@@ -91,10 +91,9 @@ export async function generateReservationRecipe(reservationId: string): Promise<
   if (!box) return { ok: false, error: "reservation_not_found" }
   const servings = box.tipo === "solo" ? 1 : box.tipo === "duo" ? 2 : 4
 
-  let generated: Awaited<ReturnType<typeof createRecipeWithOpenAI>>
+  let generated: Awaited<ReturnType<typeof createRecipeWithGemini>>
   try {
-    generated = await createRecipeWithOpenAI({
-      userId: user.id,
+    generated = await createRecipeWithGemini({
       boxTitle: box.title,
       servings,
       items,
